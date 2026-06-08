@@ -1,0 +1,49 @@
+/* 
+  The following CSS applies the 'box-sizing: border-box' property to all elements.
+
+  What does this do?
+  - By default, in CSS, the width and height you set on an element do NOT include padding and border.
+  - With 'box-sizing: border-box', the width and height include the element's padding and border.
+
+  Why use it?
+  - This makes sizing elements more predictable.
+  - It helps avoid unexpected layout issues when adding padding or borders.
+
+  Example effect:
+  - Without 'border-box': 
+      width = content + padding + border
+  - With 'border-box':
+      width = exactly what you set, including padding and border
+
+  Reference: https://css-tricks.com/box-sizing/
+*/
+
+/*
+  In CSS, the asterisk * is called the Universal Selector.
+  It selects ALL elements on the page, unless restricted by another selector.
+
+  Usage:
+    * { ... }
+
+  Example:
+    * {
+      box-sizing: border-box;
+    }
+
+  This applies the given rules (such as box-sizing) to every single element in the HTML document.
+
+  It's often used for global resets or applying very broad styles that should affect everything by default.
+*/
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #0a0a0a;
+  color: #fff;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+/* Elements like html, body, h1, h2, h3, h4, h5, h6, p, ul, li, button, and input do not require a dot (.) because they are HTML tags (elements), not CSS classes. */

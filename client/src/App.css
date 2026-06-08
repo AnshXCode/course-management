@@ -1,0 +1,243 @@
+.app-layout {
+  display: flex;
+  /* 
+    We use min-height: 100vh here to ensure that the layout always spans at least the full height of the viewport.
+    - "100vh" means 100% of the viewport height.
+    - This prevents the background and sidebar from stopping short if the page content is shorter than the screen.
+    - It ensures the sidebar and main content visually fill the whole browser window for a consistent app-like appearance.
+  */
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 240px;
+  /*
+    flex-shrink: 0; 
+    - Prevents the sidebar from shrinking when there is not enough space in the flex container.
+    - By default, flex items are allowed to shrink to fit smaller containers.
+    - Setting flex-shrink to 0 ensures the sidebar always stays at its full width (240px) and does not get compressed.
+    - This is especially useful if the main content takes up a lot of space or on smaller screens.
+  */
+  flex-shrink: 0;
+  background: #111;
+  border-right: 1px solid #2a2a2a;
+  padding: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.sidebar-header {
+  padding: 0 0.5rem;
+}
+
+.sidebar-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.sidebar-subtitle {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+  color: #888;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.nav-item {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #aaa;
+  font-size: 0.95rem;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.nav-item:hover {
+  background: #1f1f1f;
+  color: #fff;
+}
+
+.nav-item.active {
+  background: #2563eb;
+  color: #fff;
+}
+
+.main-content {
+  /* 
+    flex: 1;
+    - This tells the .main-content element to grow and fill the available space 
+      in its flex container (the parent, .app-layout).
+    - Without flex: 1, the sidebar and content areas might not proportionally fill the parent,
+      which could lead to layout issues.
+    - Setting flex: 1 makes .main-content expand to use all remaining space 
+      beside the sidebar, ensuring a responsive layout.
+  */
+  flex: 1;
+  overflow-y: auto;
+  background: #0a0a0a;
+}
+
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0a0a0a;
+  color: #fff;
+  padding: 1.5rem;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 22rem;
+  padding: 2rem;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  background: #111;
+}
+
+.auth-card h1 {
+  margin: 0 0 1.25rem;
+  font-size: 1.5rem;
+}
+
+.auth-form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.auth-form input {
+  padding: 0.75rem 0.85rem;
+  border: 1px solid #333;
+  border-radius: 8px;
+  background: #0a0a0a;
+  color: #fff;
+}
+
+.auth-form button {
+  margin-top: 0.25rem;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 8px;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.auth-form button:hover {
+  background: #1d4ed8;
+}
+
+.auth-footer {
+  margin: 1.25rem 0 0;
+  font-size: 0.9rem;
+  color: #888;
+  text-align: center;
+}
+
+.auth-footer a,
+.auth-link {
+  color: #60a5fa;
+  text-decoration: none;
+}
+
+.auth-footer a:hover,
+.auth-link:hover {
+  text-decoration: underline;
+}
+
+.auth-message {
+  margin: 0;
+  line-height: 1.5;
+  color: #ccc;
+}
+
+.auth-error {
+  color: #f87171;
+}
+
+.auth-verify-prompt {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #2a2a2a;
+  text-align: center;
+}
+
+.auth-verify-prompt p {
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+  color: #aaa;
+}
+
+.auth-secondary-btn {
+  padding: 0.6rem 1rem;
+  border: 1px solid #333;
+  border-radius: 8px;
+  background: transparent;
+  color: #ccc;
+  cursor: pointer;
+}
+
+.auth-secondary-btn:hover {
+  background: #1f1f1f;
+  color: #fff;
+}
+
+.logout-btn {
+  margin-top: auto; 
+  padding: 0.75rem 1rem;
+  border: 1px solid #333;
+  border-radius: 8px;
+  background: transparent;
+  color: #aaa;
+  cursor: pointer;
+}
+
+.logout-btn:hover {
+  background: #1f1f1f;
+  color: #fff;
+}
+
+.loader-section {
+  position: relative;
+}
+
+.loader {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 10, 10, 0.55);
+  border-radius: inherit;
+  z-index: 1;
+}
+
+.loader-spinner {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 3px solid #333;
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: loader-spin 0.7s linear infinite;
+}
+
+@keyframes loader-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

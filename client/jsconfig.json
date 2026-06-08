@@ -1,0 +1,44 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "checkJs": false,
+    "forceConsistentCasingInFileNames": true,
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "src/*"
+      ]
+    }
+  },
+  "include": [
+    "src"
+  ]
+}
+
+/*
+  What is the use of this jsconfig.json file?
+  The `jsconfig.json` file is used in JavaScript projects (especially in React, Next.js, or other modern JS apps)
+  to configure how editors like VSCode and build tools understand and resolve your project structure.
+
+  The key uses:
+    - It tells the editor (such as VSCode) how to resolve modules and imports. For example, the "baseUrl" and "paths"
+      settings allow you to write imports like `import X from "@/components/X"` instead of long relative paths.
+    - It enables features like IntelliSense, code navigation, refactoring, and autocompletion in your editor.
+    - It configures the JavaScript and JSX compilation/analysis settings, ensuring consistency in project tooling.
+
+  Why was it created and when is it created by developers?
+
+  - It is typically created by developers at the start of a project (sometimes later), when they want:
+      * Cleaner import paths (using aliases, e.g., @/ for src), 
+      * Better code intelligence and error checking in the editor, or
+      * To avoid problems with large projects that have complex folder structures.
+    - Sometimes tools or project templates initialize it automatically; other times, developers add it for the above reasons.
+
+  In summary:
+    `jsconfig.json` improves developer experience, helps with organizing imports, and guides both code editors
+    and build tooling in understanding your JavaScript project's structure.
+*/

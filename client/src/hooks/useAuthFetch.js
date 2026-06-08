@@ -5,7 +5,6 @@ import { getToken } from "../api/config.js";
 export default function useAuthFetch() {
     const { logout } = useAuth();
     const navigate = useNavigate();
-    
 
     async function authFetch(url, options = {}) {
         const token = getToken();

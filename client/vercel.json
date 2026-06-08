@@ -1,0 +1,9 @@
+{
+    "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  }
+
+//   This file, vercel.json, is used to configure deployment settings for Vercel,
+//   a cloud platform for static sites and Serverless Functions.
+//   In this file, custom routing rules are set—such as the "rewrites" block,
+//   which ensures that all incoming requests are served the same entry point (index.html)
+//   to support client-side routing in single-page applications like those built with React or Vue.

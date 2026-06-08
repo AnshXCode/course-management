@@ -3,7 +3,6 @@ import { useAuth } from "../context/AuthProvider.jsx";
 import { getToken } from "../api/config.js";
 
 export default function useAuthFetch() {
-    
     const { logout } = useAuth();
     const navigate = useNavigate();
 

@@ -3,6 +3,9 @@ import pool from '../db/pool.js';
 import bcrypt from "bcrypt";
 import jwt from 'jsonwebtoken';
 import { sendEmailForVerification } from '../services/email.js';
+import {validateBody} from "../middleware/validate.js";
+import {loginSchema,emailSchema} from "../schemas/auth.schema.js";
+
 const router = express.Router();
 
 const verifyPassword = async (hashPassword, password) => {
@@ -23,9 +26,6 @@ const verifyPassword = async (hashPassword, password) => {
 router.get('/verify-email/:verifyToken', async (req, res) => {
     try {
         const { verifyToken } = req.params;
-        if (!verifyToken) {
-            return res.status(400).json({ error: "Invalid or expired link" });
-        }
         const payload = jwt.verify(verifyToken, process.env.JWT_SECRET);
         if (payload.purpose !== 'email-verify') {
             return res.status(400).json({ error: "Invalid or expired link" });
@@ -53,12 +53,9 @@ router.get('/verify-email/:verifyToken', async (req, res) => {
 });
 
 
-router.post("/register", async (req, res) => {
+router.post("/register", validateBody(loginSchema), async (req, res) => {
     try {
         const { email, password } = req.body;
-        if (!email || !password) {
-            return res.status(400).json({ error: 'Please provide both email and password' });
-        }
         const emailExists = await pool.query(`SELECT * from USERS where EMAIL = $1`, [email]);
         if (emailExists.rows.length > 0 && emailExists.rows[0].email_verified) {
             return res.status(409).json({ error: 'Email already exists. Please Login.' });
@@ -82,10 +79,9 @@ router.post("/register", async (req, res) => {
 });
 
 
-router.post("/resend-email", async (req, res) => {
+router.post("/resend-email", validateBody(emailSchema),async (req, res) => {
     try {
         const { email } = req.body;
-        if (!email) return res.status(400).json({ error: "Email is required" });
         const result = await pool.query(`SELECT id, email, role, email_verified, password_hash FROM users WHERE email=$1`, [email]);
         if (result.rows.length === 0) {
             return res.status(401).json({ error: 'Please register email. Given email does not exist' });
@@ -110,12 +106,9 @@ router.post("/resend-email", async (req, res) => {
 })
 
 
-router.post("/login", async (req, res) => {
+router.post("/login", validateBody(loginSchema), async (req, res) => {
     try {
         const { email, password } = req.body;
-        if (!email || !password) {
-            return res.status(400).json({ error: 'Please provide both email and password' });
-        }
         const result = await pool.query(`SELECT id, email, role, email_verified, password_hash FROM users WHERE email=$1`, [email]);
         if (result.rows.length === 0) {
             return res.status(401).json({ error: 'Invalid email or password' });

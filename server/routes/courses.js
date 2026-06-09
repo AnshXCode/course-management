@@ -1,6 +1,8 @@
 import { Router } from "express";
 import pool from "../db/pool.js";
 import { requireAdmin } from "../middleware/auth.js";
+import { validateBody } from "../middleware/validate.js";
+import { courseBodySchema } from "../schemas/course.schema.js";
 const router = Router();
 
 router.get("/", async (req, res) => {
@@ -13,11 +15,8 @@ router.get("/", async (req, res) => {
     }
 });
 
-router.post("/", requireAdmin, async (req, res) => {
+router.post("/", requireAdmin, validateBody(courseBodySchema), async (req, res) => {
     const { code, title, description, capacity } = req.body;
-    if (!code || !title) {
-        return res.status(400).json({ error: "code and title are required" });
-    }
     try {
         // pool.query accepts two arguments:
         // 1. The SQL query string, which can have placeholders ($1, $2, etc.) for parameterized values.
@@ -86,12 +85,9 @@ router.get("/:id", async (req, res) => {
     }
 })
 
-router.put("/:id", requireAdmin, async (req, res) => {
+router.put("/:id", requireAdmin, validateBody(courseBodySchema),async (req, res) => {
     const { id } = req.params;
     const { code, title, description, capacity } = req.body;
-    if (!code || !title) {
-        return res.status(400).json({ error: "code and title are required" });
-    }
     try {
         const result = await pool.query(
             `UPDATE courses 

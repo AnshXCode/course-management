@@ -95,11 +95,12 @@ const Enrollments = () => {
                     studentName: students.find(i => i.id === parseInt(selectedStudent)).username
                 })
             });
+            const result = await res.json();
             if (res.ok) {
                 notify.success("Student enrolled");
                 fetchEnrollments();
             } else {
-                notify.error("Failed to enroll student");
+                notify.error(result.error);
             }
         } catch (err) {
             console.error(err);

@@ -12,20 +12,14 @@ const requireAuth = (req, res, next) => {
     }
     const token = auth.split(" ")[1];
     try {
-        // Use the correct secret env variable (likely JWT_SECRET, not JWT_TOKEN)
-        try {
-            const payload = jwt.verify(token, process.env.JWT_SECRET);
-            req.user = payload; // Attach decoded user info to req, not res
-            next();
-        } catch (err) {
-            // If verify fails (token invalid, expired, signature doesn't match, etc.),
-            // jwt.verify throws and we return a 401 Unauthorized response.
-            console.error(err);
-            return res.status(401).json({ error: 'Please authenticate' });
-        }
+        const payload = jwt.verify(token, process.env.JWT_SECRET);
+        req.user = payload; // Attach decoded user info to req, not res
+        next();
     } catch (err) {
+        console.error(err);
         return res.status(401).json({ error: 'Please authenticate' });
     }
+
 }
 
 const requireAdmin = (req, res, next) => {

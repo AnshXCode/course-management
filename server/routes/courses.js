@@ -1,5 +1,6 @@
 import { Router } from "express";
 import pool from "../db/pool.js";
+import { get, set, del } from "../cache.js";
 import { requireAdmin } from "../middleware/auth.js";
 import { validateBody } from "../middleware/validate.js";
 import { courseBodySchema } from "../schemas/course.schema.js";
@@ -7,10 +8,19 @@ import { asyncHandler } from "../middleware/asyncHandler.js";
 
 const router = Router();
 
+const COURSES_LIST_KEY = "courses:list";
+const COURSES_LIST_TTL_SECONDS = 60;
+
 router.get("/", asyncHandler(async (req, res) => {
+    const cached = get(COURSES_LIST_KEY);
+    if (cached) {
+        return res.status(200).json(cached);
+    }
+
     const result = await pool.query(
         "SELECT id, code, title, description, capacity, created_at FROM courses ORDER BY id"
     );
+    set(COURSES_LIST_KEY, result.rows, COURSES_LIST_TTL_SECONDS);
     res.status(200).json(result.rows);
 }));
 
@@ -22,7 +32,20 @@ router.post("/", requireAdmin, validateBody(courseBodySchema), asyncHandler(asyn
          RETURNING id, code, title, description, capacity, created_at`,
         [code, title, description ?? null, capacity ?? 30]
     );
+    del(COURSES_LIST_KEY);
     res.status(201).json(result.rows[0]);
+}));
+
+router.get("/:id", asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const result = await pool.query(
+        "SELECT id, code, title, description, capacity, created_at FROM courses WHERE id = $1",
+        [id]
+    );
+    if (result.rows.length === 0) {
+        return res.status(404).json({ error: "Course not found" });
+    }
+    res.status(200).json(result.rows[0]);
 }));
 
 router.get("/:id/students", asyncHandler(async (req, res) => {
@@ -41,18 +64,6 @@ router.get("/:id/students", asyncHandler(async (req, res) => {
     res.status(200).json(result.rows);
 }));
 
-router.get("/:id", asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    const result = await pool.query(
-        "SELECT id, code, title, description, capacity, created_at FROM courses WHERE id = $1",
-        [id]
-    );
-    if (result.rows.length === 0) {
-        return res.status(404).json({ error: "Course not found" });
-    }
-    res.status(200).json(result.rows[0]);
-}));
-
 router.put("/:id", requireAdmin, validateBody(courseBodySchema), asyncHandler(async (req, res) => {
     const { id } = req.params;
     const { code, title, description, capacity } = req.body;
@@ -66,6 +77,7 @@ router.put("/:id", requireAdmin, validateBody(courseBodySchema), asyncHandler(as
     if (result.rows.length === 0) {
         return res.status(404).json({ error: "Course not found" });
     }
+    del(COURSES_LIST_KEY);
     res.status(200).json(result.rows[0]);
 }));
 
@@ -75,6 +87,7 @@ router.delete("/:id", requireAdmin, asyncHandler(async (req, res) => {
     if (result.rows.length === 0) {
         return res.status(404).json({ error: "Course not found" });
     }
+    del(COURSES_LIST_KEY);
     res.status(204).send();
 }));
 

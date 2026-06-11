@@ -1,3 +1,4 @@
+import "./env.js";
 import express from "express";
 import cors from "cors";
 import courseRouter from "./routes/courses.js";
@@ -7,15 +8,9 @@ import authRouter from "./routes/auth.js";
 import {requireAuth} from "./middleware/auth.js";
 import {errorHandler} from "./middleware/errorHandler.js";
 const app = express();
+app.use(express.json());
 // This middleware allows Cross-Origin Resource Sharing (CORS), enabling your server to accept requests from different origins (domains).
 app.use(cors());
-
-// This middleware enables parsing of JSON-formatted request bodies.
-// It is commonly used to handle POST and PUT requests
-// where the request body contains JSON data.
-// Yes, this middleware parses incoming JSON requests and converts the JSON payload into a JavaScript object,
-// which is then available under req.body. For example, if a client sends '{"name": "Alice"}', req.body will be { name: "Alice" }.
-app.use(express.json());
 
 app.use("/api/courses", requireAuth, courseRouter);
 app.use("/api/students", requireAuth, studentRouter);

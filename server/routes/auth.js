@@ -9,7 +9,7 @@ import { asyncHandler } from "../middleware/asyncHandler.js";
 
 const router = express.Router();
 
-const verifyPassword = async (hashPassword, password) => {
+const verifyPassword = async (password, hashPassword) => {
     // bcrypt.compare returns a Promise that resolves to true if the password matches the hash, or false otherwise.
     return bcrypt.compare(password, hashPassword);
 };
@@ -101,7 +101,7 @@ router.post("/login", validateBody(loginSchema), asyncHandler(async (req, res) =
     if (!result.rows[0].email_verified) {
         return res.status(403).json({ error: "Please register and verify email", needsVerification: true });
     }
-    const isPasswordCorrect = await verifyPassword(result.rows[0].password_hash, password);
+    const isPasswordCorrect = await verifyPassword(password, result.rows[0].password_hash);
     if (!isPasswordCorrect) {
         return res.status(401).json({ error: "Invalid email or password" });
     }

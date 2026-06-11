@@ -1,7 +1,4 @@
-import dotenv from "dotenv";
 import { api } from "./request.js";
-
-dotenv.config();
 
 export async function loginAsAdmin() {
     const email = process.env.TEST_ADMIN_EMAIL;

@@ -15,9 +15,9 @@ router.post("/", requireAdmin, asyncHandler(async (req, res) => {
     if (!studentId || !courseId) {
         return res.status(400).json({ error: "Please provide both studentId and courseId" });
     }
-    const studentsEnrolledInCourseQuery = await pool.query(`SELECT * from Enrollments Where course_id = $1`,[courseId]);
+    const studentsEnrolledInCourseQuery = await pool.query(`SELECT COUNT(*) from Enrollments Where course_id = $1`,[courseId]);
     const capacityQuery = await pool.query(`SELECT capacity from courses where id = $1`,[courseId]);
-    if(studentsEnrolledInCourseQuery.rows.length >= capacityQuery.rows[0].capacity){
+    if(studentsEnrolledInCourseQuery.rows[0].count >= capacityQuery.rows[0].capacity){
         return res.status(400).json({error: 'Course capacity full'});
     }
     const result = await pool.query(
@@ -26,7 +26,9 @@ router.post("/", requireAdmin, asyncHandler(async (req, res) => {
          RETURNING id, student_id, course_id, enrolled_at`,
         [studentId, courseId, studentName, courseName]
     );
-    res.status(201).json(result.rows[0]);
+    res.status(201).json({info: 'Student enrolled successfully',
+        data: result.rows[0]
+    });
 }));
 
 router.delete("/:id", requireAdmin, asyncHandler(async (req, res) => {

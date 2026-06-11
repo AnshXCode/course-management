@@ -127,7 +127,61 @@
   color: #fff;
 }
 
-.auth-form button {
+.auth-password-field {
+  display: flex;
+  align-items: center;
+  border: 1px solid #333;
+  border-radius: 8px;
+  background: #0a0a0a;
+  overflow: hidden;
+}
+
+.auth-password-field input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  padding: 0.75rem 0.85rem;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: #fff;
+}
+
+.auth-password-field input:focus {
+  outline: none;
+}
+
+.auth-password-field:focus-within {
+  border-color: #555;
+}
+
+.auth-password-toggle {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: #888;
+  cursor: pointer;
+}
+
+.auth-password-toggle:hover:not(:disabled) {
+  color: #ccc;
+  background: transparent;
+}
+
+.auth-password-toggle:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.auth-form button[type="submit"] {
   margin-top: 0.25rem;
   padding: 0.75rem;
   border: none;
@@ -138,7 +192,7 @@
   cursor: pointer;
 }
 
-.auth-form button:hover {
+.auth-form button[type="submit"]:hover {
   background: #1d4ed8;
 }
 

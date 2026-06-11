@@ -15,6 +15,11 @@ router.post("/", requireAdmin, asyncHandler(async (req, res) => {
     if (!studentId || !courseId) {
         return res.status(400).json({ error: "Please provide both studentId and courseId" });
     }
+    const studentsEnrolledInCourseQuery = await pool.query(`SELECT * from Enrollments Where course_id = $1`,[courseId]);
+    const capacityQuery = await pool.query(`SELECT capacity from courses where id = $1`,[courseId]);
+    if(studentsEnrolledInCourseQuery.rows.length >= capacityQuery.rows[0].capacity){
+        return res.status(400).json({error: 'Course capacity full'});
+    }
     const result = await pool.query(
         `INSERT INTO enrollments (student_id, course_id, student_name, course_name)
          VALUES ($1, $2, $3, $4)

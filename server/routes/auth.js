@@ -10,6 +10,7 @@ import { asyncHandler } from "../middleware/asyncHandler.js";
 const router = express.Router();
 
 const verifyPassword = async (hashPassword, password) => {
+    // bcrypt.compare returns a Promise that resolves to true if the password matches the hash, or false otherwise.
     return bcrypt.compare(password, hashPassword);
 };
 

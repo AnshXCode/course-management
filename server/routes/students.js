@@ -1,12 +1,22 @@
 import { Router } from "express";
 import pool from "../db/pool.js";
+import { get, set, del } from "../lru-cache.js";
 import { requireAdmin } from "../middleware/auth.js";
 import { asyncHandler } from "../middleware/asyncHandler.js";
 
 const router = Router();
 
+const STUDENTS_LIST_KEY = "students:list";
+const STUDENTS_LIST_TTL_SECONDS = 60;
+
 router.get("/", asyncHandler(async (req, res) => {
+    const cached = get(STUDENTS_LIST_KEY);
+    if (cached) {
+        return res.status(200).json(cached);
+    }
+
     const result = await pool.query("SELECT * FROM students ORDER BY created_at");
+    set(STUDENTS_LIST_KEY, result.rows, STUDENTS_LIST_TTL_SECONDS);
     res.status(200).json(result.rows);
 }));
 
@@ -23,6 +33,7 @@ router.post("/", requireAdmin, asyncHandler(async (req, res) => {
     if (result.rows.length === 0) {
         return res.status(500).json({ error: "Something went wrong" });
     }
+    del(STUDENTS_LIST_KEY);
     res.status(201).json(result.rows[0]);
 }));
 
@@ -40,6 +51,7 @@ router.put("/:id", requireAdmin, asyncHandler(async (req, res) => {
     if (result.rows.length === 0) {
         return res.status(404).json({ error: "Student not found" });
     }
+    del(STUDENTS_LIST_KEY);
     res.status(200).json(result.rows[0]);
 }));
 
@@ -49,6 +61,7 @@ router.delete("/:id", requireAdmin, asyncHandler(async (req, res) => {
     if (result.rows.length === 0) {
         return res.status(404).json({ error: "Student not found" });
     }
+    del(STUDENTS_LIST_KEY);
     res.status(200).json(result.rows[0]);
 }));
 

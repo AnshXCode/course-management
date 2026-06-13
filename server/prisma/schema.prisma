@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model courses {
+  id          Int           @id @default(autoincrement())
+  code        String        @unique @db.VarChar(20)
+  title       String        @db.VarChar(255)
+  description String?
+  capacity    Int           @default(30)
+  created_at  DateTime      @default(now()) @db.Timestamptz(6)
+  enrollments enrollments[]
+  assignments assignments[]
+}
+
+model enrollments {
+  id           Int      @id @default(autoincrement())
+  student_id   Int
+  course_id    Int
+  student_name String?  @db.VarChar(255)
+  course_name  String?  @db.VarChar(255)
+  enrolled_at  DateTime @default(now()) @db.Timestamptz(6)
+  courses      courses  @relation(fields: [course_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  students     students @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([student_id, course_id])
+}
+
+model assignments {
+  id          Int      @id @default(autoincrement())
+  course_id   Int
+  title       String   @db.VarChar(255)
+  description String?
+  due_date    DateTime
+  max_points  Int      @default(100)
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+  courses     courses  @relation(fields: [course_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model students {
+  id          Int           @id @default(autoincrement())
+  username    String        @unique @db.VarChar(50)
+  email       String        @unique @db.VarChar(255)
+  created_at  DateTime      @default(now()) @db.Timestamptz(6)
+  enrollments enrollments[]
+}
+
+model users {
+  id             Int      @id @default(autoincrement())
+  email          String   @unique @db.VarChar(255)
+  password_hash  String   @db.VarChar(255)
+  role           String   @default("'viewer'::character varying") @db.VarChar(50)
+  created_at     DateTime @default(now()) @db.Timestamptz(6)
+  email_verified Boolean  @default(false)
+}

@@ -4,6 +4,7 @@ const endpoints = {
     courses: `${API_BASE}/courses`,
     students: `${API_BASE}/students`,
     enrollments: `${API_BASE}/enrollments`,
+    dashboard: `${API_BASE}/v2/dashboard`,
     auth: `${API_BASE}/auth`,
 };
 

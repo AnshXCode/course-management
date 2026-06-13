@@ -295,3 +295,145 @@
     transform: rotate(360deg);
   }
 }
+
+.dashboard-page {
+  padding: 0 24px 2rem;
+  color: #fff;
+}
+
+.dashboard-page h1 {
+  margin: 0 0 0.35rem;
+}
+
+.dashboard-subtitle {
+  margin: 0 0 1.5rem;
+  color: #888;
+  font-size: 0.9rem;
+}
+
+.dashboard-loader {
+  min-height: 8rem;
+}
+
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 1rem 1.15rem;
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+  background: #111;
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: #888;
+}
+
+.stat-value {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.dashboard-section h2 {
+  margin: 0 0 1rem;
+  font-size: 1.1rem;
+}
+
+.dashboard-empty {
+  color: #888;
+}
+
+.dashboard-course-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.dashboard-course-item {
+  padding: 1rem 1.15rem;
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+  background: #111;
+}
+
+.dashboard-course-item.full {
+  border-color: #7f1d1d;
+}
+
+.dashboard-course-item.near-capacity {
+  border-color: #92400e;
+}
+
+.dashboard-course-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 0.65rem;
+}
+
+.dashboard-course-title {
+  display: block;
+  margin-top: 0.2rem;
+  color: #ccc;
+  font-size: 0.95rem;
+}
+
+.dashboard-course-count {
+  color: #aaa;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.dashboard-progress-track {
+  height: 6px;
+  border-radius: 999px;
+  background: #2a2a2a;
+  overflow: hidden;
+}
+
+.dashboard-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: #2563eb;
+  transition: width 0.2s ease;
+}
+
+.dashboard-course-item.full .dashboard-progress-fill {
+  background: #dc2626;
+}
+
+.dashboard-course-item.near-capacity .dashboard-progress-fill {
+  background: #d97706;
+}
+
+.dashboard-badge {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.dashboard-badge.full {
+  background: rgba(220, 38, 38, 0.15);
+  color: #fca5a5;
+}
+
+.dashboard-badge.near {
+  background: rgba(217, 119, 6, 0.15);
+  color: #fdba74;
+}

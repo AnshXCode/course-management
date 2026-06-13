@@ -2,6 +2,7 @@ import { Route, Routes } from "react-router-dom";
 import Courses from "./components/Courses.jsx";
 import Students from "./components/Students.jsx";
 import Enrollments from "./components/Enrollments.jsx";
+import Dashboard from "./components/Dashboard.jsx";
 import Login from "./components/Login.jsx";
 import Register from "./components/Register.jsx";
 import VerifyEmail from "./components/VerifyEmail.jsx";
@@ -33,6 +34,7 @@ function App() {
       <Route path="/verify-email/:verifyToken" element={<VerifyEmail />} />
       <Route element={<ProtectedRoute />}>
         <Route element={<ProtectedLayout />}>
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/courses" element={<Courses />} />
           <Route path="/students" element={<Students />} />
           <Route path="/enrollments" element={<Enrollments />} />

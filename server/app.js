@@ -4,6 +4,8 @@ import cors from "cors";
 import courseRouter from "./routes/courses.js";
 import studentRouter from "./routes/students.js";
 import enrollmentRouter from "./routes/enrollments.js";
+import {router as dashboardRouter} from "./routes/v2/dashboard.js";
+import assignmentRouter from "./routes/v2/assignments.js";
 import authRouter from "./routes/auth.js";
 import {requireAuth} from "./middleware/auth.js";
 import {errorHandler} from "./middleware/errorHandler.js";
@@ -15,6 +17,8 @@ app.use(cors());
 app.use("/api/courses", requireAuth, courseRouter);
 app.use("/api/students", requireAuth, studentRouter);
 app.use("/api/enrollments", requireAuth, enrollmentRouter);
+app.use("/api/v2/dashboard", requireAuth, dashboardRouter);
+app.use("/api/v2/assignments",  assignmentRouter);
 app.use("/api/auth", authRouter);
 app.get("/api/health", (req, res) => {
     res.json({ ok: true });

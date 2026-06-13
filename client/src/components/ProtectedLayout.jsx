@@ -2,6 +2,7 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthProvider.jsx";
 
 const NAV_ITEMS = [
+  { to: "/dashboard", label: "Dashboard" },
   { to: "/courses", label: "Courses" },
   { to: "/students", label: "Students" },
   { to: "/enrollments", label: "Enrollments" },

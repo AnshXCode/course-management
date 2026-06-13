@@ -64,7 +64,8 @@ function Courses() {
                 body: JSON.stringify(course)
             });
             if (!res.ok) {
-                notify.error("Failed to create course");
+                const result = await res.json()
+                notify.error(result.error);
                 return;
             };
             fetchCourses();

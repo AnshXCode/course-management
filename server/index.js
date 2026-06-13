@@ -9,9 +9,22 @@
 //   index.js → run the API as a live process
 
 import app from "./app.js";
+import { initRedis } from "./redis-cache.js";
 
 const PORT = process.env.PORT || 5001;
 
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+async function start() {
+    if (process.env.REDIS_URL) {
+        await initRedis();
+        console.log("Redis connected");
+    }
+
+    app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+    });
+}
+
+start().catch((err) => {
+    console.error("Failed to start server:", err);
+    process.exit(1);
 });

@@ -1,11 +1,37 @@
 -- Course Management System — database schema
 --
--- Fresh setup:
+-- Fresh local setup:
+--   brew services start postgresql@16   # or your installed version
 --   createdb course_management
 --   psql course_management -f server/db/schema.sql
 --
 -- From server/ directory:
 --   psql course_management -f db/schema.sql
+--
+-- Connection string (.env):
+--   DATABASE_URL=postgresql://localhost:5432/course_management
+--
+-- If you wiped tables with DROP SCHEMA public CASCADE, recreate public first:
+--   psql course_management -c "CREATE SCHEMA IF NOT EXISTS public; GRANT ALL ON SCHEMA public TO public; GRANT ALL ON SCHEMA public TO CURRENT_USER;"
+
+-- Ensure tables are created in public (fixes "no schema has been selected to create in")
+CREATE SCHEMA IF NOT EXISTS public;
+GRANT ALL ON SCHEMA public TO public;
+GRANT ALL ON SCHEMA public TO CURRENT_USER;
+SET search_path TO public;
+
+-- ---------------------------------------------------------------------------
+-- users (auth — login / register / email verification)
+-- ---------------------------------------------------------------------------
+CREATE TABLE users (
+  id             SERIAL PRIMARY KEY,
+  email          VARCHAR(255) NOT NULL,
+  password_hash  VARCHAR(255) NOT NULL,
+  role           VARCHAR(50)  NOT NULL DEFAULT 'viewer',
+  email_verified BOOLEAN      NOT NULL DEFAULT FALSE,
+  created_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  CONSTRAINT users_email_key UNIQUE (email)
+);
 
 -- ---------------------------------------------------------------------------
 -- courses
@@ -16,10 +42,9 @@ CREATE TABLE courses (
   title       VARCHAR(255) NOT NULL,
   description TEXT,
   capacity    INTEGER      NOT NULL DEFAULT 30,
-  created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+  created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  CONSTRAINT courses_code_key UNIQUE (code)
 );
-
-CREATE UNIQUE INDEX courses_code_key ON courses (code);
 
 -- ---------------------------------------------------------------------------
 -- students
@@ -28,11 +53,10 @@ CREATE TABLE students (
   id         SERIAL PRIMARY KEY,
   username   VARCHAR(50)  NOT NULL,
   email      VARCHAR(255) NOT NULL,
-  created_at TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+  created_at TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  CONSTRAINT students_username_key UNIQUE (username),
+  CONSTRAINT students_email_key UNIQUE (email)
 );
-
-CREATE UNIQUE INDEX students_username_key ON students (username);
-CREATE UNIQUE INDEX students_email_key ON students (email);
 
 -- ---------------------------------------------------------------------------
 -- enrollments (many-to-many: students ↔ courses)
@@ -45,14 +69,23 @@ CREATE TABLE enrollments (
   student_name VARCHAR(255),
   course_name  VARCHAR(255),
   enrolled_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
-  UNIQUE (student_id, course_id)
+  CONSTRAINT enrollments_student_id_course_id_key UNIQUE (student_id, course_id)
 );
 
-CREATE TABLE users (
-  id SERIAL PRIMARY KEY,
-  email VARCHAR(255) UNIQUE NOT NULL,
-  password_hash VARCHAR(255) NOT NULL,
-  role VARCHAR(50) NOT NULL DEFAULT 'viewer',
-  email_verified BOOLEAN NOT NULL DEFAULT FALSE,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+CREATE INDEX enrollments_course_id_idx ON enrollments (course_id);
+CREATE INDEX enrollments_student_id_idx ON enrollments (student_id);
+
+-- ---------------------------------------------------------------------------
+-- assignments (v2 API — Prisma)
+-- ---------------------------------------------------------------------------
+CREATE TABLE assignments (
+  id          SERIAL PRIMARY KEY,
+  course_id   INTEGER      NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+  title       VARCHAR(255) NOT NULL,
+  description TEXT,
+  due_date    TIMESTAMPTZ  NOT NULL,
+  max_points  INTEGER      NOT NULL DEFAULT 100,
+  created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
+
+CREATE INDEX assignments_course_id_idx ON assignments (course_id);

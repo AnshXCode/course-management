@@ -6,6 +6,7 @@ const endpoints = {
     enrollments: `${API_BASE}/enrollments`,
     dashboard: `${API_BASE}/v2/dashboard`,
     auth: `${API_BASE}/auth`,
+    logs: `${API_BASE}/v2/logs`
 };
 
 const getToken = () => localStorage.getItem("token");

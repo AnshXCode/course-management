@@ -6,6 +6,7 @@ const NAV_ITEMS = [
   { to: "/courses", label: "Courses" },
   { to: "/students", label: "Students" },
   { to: "/enrollments", label: "Enrollments" },
+  { to: "/logs", label: "Logs", admin: true },
 ];
 
 export default function ProtectedLayout() {
@@ -17,6 +18,8 @@ export default function ProtectedLayout() {
     navigate("/login", { replace: true });
   };
 
+  const NAV_ITEMS_AS_PER_PERMISSION = user.role !== 'admin' ? NAV_ITEMS.filter(e => !e.admin) : NAV_ITEMS;
+
   return (
     <div className="app-layout">
       <aside className="sidebar">
@@ -27,7 +30,7 @@ export default function ProtectedLayout() {
           </p>
         </div>
         <nav className="sidebar-nav">
-          {NAV_ITEMS.map((item) => (
+          {NAV_ITEMS_AS_PER_PERMISSION.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}

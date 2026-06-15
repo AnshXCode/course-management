@@ -9,6 +9,7 @@ import VerifyEmail from "./components/VerifyEmail.jsx";
 import ProtectedLayout from "./components/ProtectedLayout.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import GuestRoute from "./components/GuestRoute.jsx";
+import Logs from "./components/Logs.jsx"
 import RootRedirect from "./components/RootRedirect.jsx";
 import "./App.css";
 
@@ -38,6 +39,7 @@ function App() {
           <Route path="/courses" element={<Courses />} />
           <Route path="/students" element={<Students />} />
           <Route path="/enrollments" element={<Enrollments />} />
+          <Route path="/logs" element={<Logs />} />
         </Route>
       </Route>
       <Route path="/" element={<RootRedirect />} />

@@ -91,6 +91,7 @@ router.post("/resend-email", validateBody(emailSchema), asyncHandler(async (req,
 
 router.post("/login", validateBody(loginSchema), asyncHandler(async (req, res) => {
     const { email, password } = req.body;
+
     const result = await pool.query(
         `SELECT id, email, role, email_verified, password_hash FROM users WHERE email=$1`,
         [email]

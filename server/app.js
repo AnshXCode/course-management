@@ -9,8 +9,13 @@ import assignmentRouter from "./routes/v2/assignments.js";
 import authRouter from "./routes/auth.js";
 import { requireAuth } from "./middleware/auth.js";
 import { errorHandler } from "./middleware/errorHandler.js";
+import { assignRequestId, httpLogger } from "./middleware/requestLogger.js";
+import logsRouter from "./routes/v2/logs.js";
 const app = express();
 app.use(express.json());
+
+app.use(assignRequestId);
+app.use(httpLogger);
 // This middleware allows Cross-Origin Resource Sharing (CORS), enabling your server to accept requests from different origins (domains).
 app.use(cors());
 
@@ -18,7 +23,8 @@ app.use("/api/courses", requireAuth, courseRouter);
 app.use("/api/students", requireAuth, studentRouter);
 app.use("/api/enrollments", requireAuth, enrollmentRouter);
 app.use("/api/v2/dashboard", requireAuth, dashboardRouter);
-app.use("/api/v2/assignments", requireAuth, assignmentRouter);
+app.use("/api/v2/assignments", assignmentRouter);
+app.use("/api/v2/logs", requireAuth, logsRouter);
 app.use("/api/auth", authRouter);
 app.get("/api/health", (req, res) => {
     res.json({ ok: true });

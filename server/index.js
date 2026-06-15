@@ -7,7 +7,7 @@
 // Separation of concerns:
 //   app.js   → what the API is (configurable, testable)
 //   index.js → run the API as a live process
-
+import { logger } from "./lib/logger.js";
 import app from "./app.js";
 import { initRedis } from "./redis-cache.js";
 
@@ -20,7 +20,7 @@ async function start() {
     }
 
     app.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
+        logger.info({ port: PORT }, "Server running");
     });
 }
 

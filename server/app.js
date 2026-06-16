@@ -23,7 +23,7 @@ app.use("/api/courses", requireAuth, courseRouter);
 app.use("/api/students", requireAuth, studentRouter);
 app.use("/api/enrollments", requireAuth, enrollmentRouter);
 app.use("/api/v2/dashboard", requireAuth, dashboardRouter);
-app.use("/api/v2/assignments", assignmentRouter);
+app.use("/api/v2/assignments", requireAuth, assignmentRouter);
 app.use("/api/v2/logs", requireAuth, logsRouter);
 app.use("/api/auth", authRouter);
 app.get("/api/health", (req, res) => {

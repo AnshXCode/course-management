@@ -3,6 +3,10 @@ import pinoHttp from 'pino-http';
 import { logger } from '../lib/logger.js';
 import { addLogEntry } from "../lib/logStore.js";
 
+// req.url is stripped after routing through mounted routers (e.g. "/api/enrollments" -> "/")
+function requestPath(req) {
+    return req.originalUrl?.split("?")[0] ?? req.url;
+}
 
 // Runs before pino-http - sets ID on request + response header
 export function assignRequestId(req, res, next) {
@@ -24,7 +28,7 @@ export const httpLogger = pinoHttp({
         userEmail: req.user?.email ?? null,
         userRole: req.user?.role ?? null,
         method: req.method,
-        path: req.url,
+        path: requestPath(req),
         statusCode: res.statusCode
     }),
 
@@ -43,16 +47,17 @@ export const httpLogger = pinoHttp({
 
     // Push 4xx/5xx into the in-memory store for the GUI
     customSuccessMessage(req, res) {
+        if(req.method === 'OPTIONS') return "preflight";
         if (res.statusCode >= 400) {
             addLogEntry({
                 level: res.statusCode >= 500 ? "error" : "warn",
                 reqId: req.id,
                 method: req.method,
-                path: req.url,
+                path: requestPath(req),
                 statusCode: res.statusCode,
                 userId: req.user?.id ?? null,
                 userEmail: req.user?.email ?? null,
-                message: `${req.method} ${req.url} -> ${res.statusCode}`,
+                message: `${req.method} ${requestPath(req)} -> ${res.statusCode}`,
             })
         }
         return "request completed";

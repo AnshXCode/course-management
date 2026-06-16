@@ -9,6 +9,8 @@ import { createClient } from "redis";
 let client = null;
 
 export function isRedisConfigured() {
+    // Tests don't need Redis; an open client keeps Node alive after the suite finishes.
+    if (process.env.NODE_ENV === "test") return false;
     return Boolean(process.env.REDIS_URL);
 }
 

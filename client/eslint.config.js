@@ -17,5 +17,9 @@ export default defineConfig([
       globals: globals.browser,
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
+    rules: {
+      // Flags fetch-on-mount (setLoading before await). Prefer useQuery for new data fetching.
+      'react-hooks/set-state-in-effect': 'off',
+    },
   },
 ])

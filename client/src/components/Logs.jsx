@@ -29,7 +29,8 @@ const Logs = () => {
             }
             return data.data ?? [];
         },
-        refetchInterval: 5000,
+        staleTime: 0,
+        refetchOnMount: "always",
     });
 
     useEffect(() => {

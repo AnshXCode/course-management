@@ -5,16 +5,13 @@ import Loader from "./Loader.jsx";
 
 export default function VerifyEmail() {
   const { verifyToken } = useParams();
-  const [status, setStatus] = useState("loading");
-  const [message, setMessage] = useState("");
+  const [status, setStatus] = useState(() => (verifyToken ? "loading" : "error"));
+  const [message, setMessage] = useState(() =>
+    verifyToken ? "" : "Invalid verification link."
+  );
 
   useEffect(() => {
-    if (!verifyToken) {
-      setStatus("error");
-      setMessage("Invalid verification link.");
-      return;
-    }
-
+    if (!verifyToken) return;
     fetch(`${endpoints.auth}/verify-email/${verifyToken}`)
       .then(async (res) => {
         const data = await res.json();

@@ -35,7 +35,7 @@ export const errorHandler = (err, req, res, next) => {
         level: "error",
         reqId: req.id,
         method: req.method,
-        path: req.url,
+        path: req.originalUrl?.split("?")[0] ?? req.url,
         statusCode,
         userId: req.user?.id ?? null,
         userEmail: req.user?.email ?? null,

@@ -11,6 +11,11 @@ import { requireAuth } from "./middleware/auth.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { assignRequestId, httpLogger } from "./middleware/requestLogger.js";
 import logsRouter from "./routes/v2/logs.js";
+import { createLoginLimiter, createGlobalLimiter } from "./middleware/rateLimit.js";
+
+const loginLimiter = await createLoginLimiter();
+const globalLimiter = await createGlobalLimiter();
+
 const app = express();
 app.use(express.json());
 
@@ -19,7 +24,10 @@ app.use(httpLogger);
 // This middleware allows Cross-Origin Resource Sharing (CORS), enabling your server to accept requests from different origins (domains).
 app.use(cors());
 
-app.use("/api/courses", requireAuth, courseRouter);
+// app.use("/api/", globalLimiter);
+app.use("/api/auth/login", loginLimiter);
+app.use("/api/", globalLimiter);
+app.use("/api/courses", courseRouter);
 app.use("/api/students", requireAuth, studentRouter);
 app.use("/api/enrollments", requireAuth, enrollmentRouter);
 app.use("/api/v2/dashboard", requireAuth, dashboardRouter);

@@ -11,6 +11,7 @@ import { logger } from "./lib/logger.js";
 import app from "./app.js";
 import { initRedis } from "./redis-cache.js";
 
+
 const PORT = process.env.PORT || 5001;
 
 async function start() {
@@ -18,7 +19,6 @@ async function start() {
         await initRedis();
         console.log("Redis connected");
     }
-
     app.listen(PORT, () => {
         logger.info({ port: PORT }, "Server running");
     });

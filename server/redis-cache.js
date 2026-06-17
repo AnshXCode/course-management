@@ -26,7 +26,7 @@ export async function initRedis() {
     await client.connect();
 }
 
-async function getClient() {
+export async function getClient() {
     if (!isRedisConfigured()) {
         return null;
     }

@@ -4,8 +4,9 @@ import { get, set, del } from "../cache.js";
 import { requireAdmin } from "../middleware/auth.js";
 import { validateBody } from "../middleware/validate.js";
 import { courseBodySchema } from "../schemas/course.schema.js";
+import { paginationQuerySchema } from "../schemas/pagination.schema.js";
 import { asyncHandler } from "../middleware/asyncHandler.js";
-
+import {parsePagination, buildPaginationMeta} from "../lib/pagination.js";
 const router = Router();
 
 const COURSES_LIST_KEY = "courses:list";
@@ -16,21 +17,29 @@ function courseKey(id) {
     return `courses:id:${id}`;
 }
 
-router.get("/", asyncHandler(async (req, res) => {
-    const cached = get(COURSES_LIST_KEY);
-    if (cached) {
-        res.set("X-Cache", "HIT");
-        res.set("X-Cache-Backend", "memory");
-        return res.status(200).json(cached);
-    }
+router.get("/", validateBody(paginationQuerySchema), asyncHandler(async (req, res) => {
+    const {page, limit, offset } = parsePagination(req.query);
+    const countResult = await pool.query("SELECT COUNT(*)::int AS total FROM courses");
+    const total = countResult.rows[0].total;
+    // const cached = get(COURSES_LIST_KEY);
+    // if (cached) {
+    //     res.set("X-Cache", "HIT");
+    //     res.set("X-Cache-Backend", "memory");
+    //     return res.status(200).json(cached);
+    // }
 
     const result = await pool.query(
-        "SELECT id, code, title, description, capacity, created_at FROM courses ORDER BY id"
+        `SELECT id, code, title, description, capacity, created_at FROM courses ORDER BY id
+        LIMIT $1 OFFSET $2
+        `, [limit, offset]
     );
-    set(COURSES_LIST_KEY, result.rows, COURSES_LIST_TTL_SECONDS);
-    res.set("X-Cache", "MISS");
-    res.set("X-Cache-Backend", "memory");
-    res.status(200).json(result.rows);
+    // set(COURSES_LIST_KEY, result.rows, COURSES_LIST_TTL_SECONDS);
+    // res.set("X-Cache", "MISS");
+    // res.set("X-Cache-Backend", "memory");
+    res.status(200).json({
+        data:result.rows,
+        pagination: buildPaginationMeta({page, limit, total})
+    });
 }));
 
 router.post("/", requireAdmin, validateBody(courseBodySchema), asyncHandler(async (req, res) => {
@@ -97,8 +106,8 @@ router.put("/:id", requireAdmin, validateBody(courseBodySchema), asyncHandler(as
     if (result.rows.length === 0) {
         return res.status(404).json({ error: "Course not found" });
     }
-    del(COURSES_LIST_KEY);
-    del(courseKey(id));
+    // del(COURSES_LIST_KEY);
+    // del(courseKey(id));
     res.status(200).json(result.rows[0]);
 }));
 
@@ -108,8 +117,8 @@ router.delete("/:id", requireAdmin, asyncHandler(async (req, res) => {
     if (result.rows.length === 0) {
         return res.status(404).json({ error: "Course not found" });
     }
-    del(COURSES_LIST_KEY);
-    del(courseKey(id));
+    // del(COURSES_LIST_KEY);
+    // del(courseKey(id));
     res.status(204).send();
 }));
 

@@ -26,8 +26,11 @@ app.use(cors());
 
 // app.use("/api/", globalLimiter);
 app.use("/api/auth/login", loginLimiter);
+app.use("/api/auth/refresh", loginLimiter);
+
+
 app.use("/api/", globalLimiter);
-app.use("/api/courses", courseRouter);
+app.use("/api/courses", requireAuth, courseRouter);
 app.use("/api/students", requireAuth, studentRouter);
 app.use("/api/enrollments", requireAuth, enrollmentRouter);
 app.use("/api/v2/dashboard", requireAuth, dashboardRouter);

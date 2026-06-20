@@ -6,6 +6,8 @@ import { sendEmailForVerification } from "../services/email.js";
 import { validateBody } from "../middleware/validate.js";
 import { loginSchema, emailSchema } from "../schemas/auth.schema.js";
 import { asyncHandler } from "../middleware/asyncHandler.js";
+import { signAccessToken } from "../lib/tokens.js";
+import { createRefreshToken, revokeRefreshToken, findValidRefreshToken } from "../services/refreshTokenService.js";
 
 const router = express.Router();
 
@@ -18,7 +20,7 @@ router.get("/verify-email/:verifyToken", asyncHandler(async (req, res) => {
     try {
         const { verifyToken } = req.params;
         const payload = jwt.verify(verifyToken, process.env.JWT_SECRET);
-        if (payload.purpose !== "email-verify") {
+        if (payload.type !== "email-verify") {
             return res.status(400).json({ error: "Invalid or expired link" });
         }
         const user_id = payload.userId;
@@ -60,7 +62,7 @@ router.post("/register", validateBody(loginSchema), asyncHandler(async (req, res
         [email, password_hash]
     );
     const token = jwt.sign(
-        { userId: result.rows[0].id, purpose: "email-verify" },
+        { userId: result.rows[0].id, type: "email-verify" },
         process.env.JWT_SECRET,
         { expiresIn: "3h" }
     );
@@ -81,7 +83,7 @@ router.post("/resend-email", validateBody(emailSchema), asyncHandler(async (req,
         return res.status(200).json({ info: "Email already verified. You can log in." });
     }
     const token = jwt.sign(
-        { userId: result.rows[0].id, purpose: "email-verify" },
+        { userId: result.rows[0].id, type: "email-verify" },
         process.env.JWT_SECRET,
         { expiresIn: "3h" }
     );
@@ -111,8 +113,38 @@ router.post("/login", validateBody(loginSchema), asyncHandler(async (req, res) =
         email: result.rows[0].email,
         role: result.rows[0].role,
     };
-    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "1h" });
-    res.status(200).json({ token, user: payload });
+    const accessToken = signAccessToken(payload);
+    const refreshToken = await createRefreshToken(result.rows[0].id);
+
+    res.status(200).json({ accessToken, refreshToken, user: payload });
 }));
+
+router.post('/logout', asyncHandler(async(req, res) => {
+    const {refreshToken} = req.body;
+    if(refreshToken){
+        await revokeRefreshToken(refreshToken);
+    }
+    res.status(200).json({info: "Logged out"});
+}))
+
+router.post("/refresh", asyncHandler(async(req, res) => {
+        const {refreshToken} = req.body;
+        if(!refreshToken) {
+            return res.status(401).json({error: "Refresh token required"});
+        }
+        const row = await findValidRefreshToken(refreshToken);
+        if(!row){
+            return res.status(401).json({error: "Refresh token Expired or Invalid"});
+        }
+
+        // Rotation: revoke old, issue new refresh token
+        await revokeRefreshToken(refreshToken);
+        const newRefreshToken = await createRefreshToken(row.user_id);
+        const user = { id: row.user_id, email: row.email, role: row.role};
+        const accessToken = signAccessToken(user);
+        res.status(200).json({accessToken, refreshToken: newRefreshToken, user})
+
+}))
+
 
 export default router;

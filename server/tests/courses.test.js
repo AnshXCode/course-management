@@ -16,7 +16,10 @@ describe("GET /api/courses", () => {
             200,
             `GET courses failed: ${JSON.stringify(res.body)}`
         );
-        assert.ok(Array.isArray(res.body));
+        assert.equal(res.status, 200);
+        assert.ok(Array.isArray(res.body.data));
+        assert.ok(res.body.pagination);
+        assert.equal(typeof res.body.pagination.total, "number");
     });
 });
 

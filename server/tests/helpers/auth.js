@@ -20,7 +20,7 @@ export async function loginAsAdmin() {
         );
     }
 
-    if (!res.body.token) {
+    if (!res.body.accessToken) {
         throw new Error("Login succeeded but no token was returned");
     }
 

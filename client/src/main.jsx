@@ -9,7 +9,7 @@ import "./index.css";
 import App from "./App.jsx";
 
 createRoot(document.getElementById("root")).render(
-  <StrictMode>
+  // <StrictMode>
     <BrowserRouter>
       {/* QueryClientProvider is used here to wrap our app, so that any component inside 
           (such as those using useQuery, useMutation, etc. from React Query) has access 
@@ -18,13 +18,11 @@ createRoot(document.getElementById("root")).render(
           React Query hooks (e.g., useQuery) can now access the queryClient provided here. */}
       <AuthProvider>
         <QueryClientProvider client={queryClient}>
- 
- 
         <NotificationProvider>
           <App />
         </NotificationProvider>
         </QueryClientProvider>
       </AuthProvider>
     </BrowserRouter>
-  </StrictMode>
+  // </StrictMode>
 );

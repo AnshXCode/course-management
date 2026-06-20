@@ -1,22 +1,32 @@
 import { createContext, useContext, useState } from "react";
-import { clearToken, getToken, getUser, setAuth } from "../api/config.js";
+import { clearToken, getAccessToken, getUser, setAuth, getRefreshToken, endpoints } from "../api/config.js";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-    const [user, setUser] = useState(() => (getToken() ? getUser() : null));
+    const [user, setUser] = useState(() => (getAccessToken() ? getUser() : null));
 
-    const login = (token, userData) => {
-        setAuth(token, userData);
+    const login = (accessToken, refreshToken, userData) => {
+        setAuth(accessToken, refreshToken, userData);
         setUser(userData);
     };
 
-    const logout = () => {
+    const logout = async () => {
+        const refreshToken = getRefreshToken();
+        if (refreshToken) {
+            await fetch(`${endpoints.auth}/logout`, {
+                method: 'POST',
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ refreshToken }),
+            })
+        }
         clearToken();
         setUser(null);
     };
 
-    const isAuthenticated = !!user && !!getToken();
+    const isAuthenticated = !!user && !!getAccessToken();
 
     return (
         <AuthContext.Provider value={{ user, login, logout, isAuthenticated }}>

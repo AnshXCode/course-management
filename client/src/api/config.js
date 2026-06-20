@@ -9,21 +9,43 @@ const endpoints = {
     logs: `${API_BASE}/v2/logs`
 };
 
-const getToken = () => localStorage.getItem("token");
+const getAccessToken = () => localStorage.getItem("accessToken");
+const getRefreshToken = () => localStorage.getItem("refreshToken");
 
 const getUser = () => {
     const saved = localStorage.getItem("user");
     return saved ? JSON.parse(saved) : null;
 };
 
-const setAuth = (token, user) => {
-    localStorage.setItem("token", token);
+const setAuth = (accessToken, refreshToken, user) => {
+    localStorage.setItem("accessToken", accessToken);
+    localStorage.setItem("refreshToken", refreshToken)
     localStorage.setItem("user", JSON.stringify(user));
 };
 
 const clearToken = () => {
-    localStorage.removeItem("token");
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
     localStorage.removeItem("user");
 };
 
-export { endpoints, clearToken, getToken, getUser, setAuth };
+const tryRefresh = async() => {
+    const refreshToken = getRefreshToken();
+    if(!refreshToken) return false;
+    
+    const res = await fetch(`${endpoints.auth}/refresh`, {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({refreshToken})
+    })
+    const result = await res.json();
+    const {accessToken, refreshToken: rf, user} = result
+    console.log(result, res.ok, 'RESULT')
+    if(res.ok){
+        setAuth(accessToken, rf, user);
+        return true
+    }
+    return false
+}   
+
+export { endpoints, clearToken, getAccessToken, getRefreshToken, getUser, setAuth, tryRefresh };

@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import { verifyAccessToken } from "../lib/tokens.js";
 
 const requireAuth = (req, res, next) => {
     // Node.js automatically lowercases all incoming HTTP header keys. 
@@ -12,7 +13,7 @@ const requireAuth = (req, res, next) => {
     }
     const token = auth.split(" ")[1];
     try {
-        const payload = jwt.verify(token, process.env.JWT_SECRET);
+        const payload = verifyAccessToken(token);
         req.user = payload; // Attach decoded user info to req, not res
         //    → req.log.info('course created')     ← child() helps HERE
         //                                          customProps does NOT help here

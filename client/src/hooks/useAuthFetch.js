@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthProvider.jsx";
-import { getToken } from "../api/config.js";
+import { getAccessToken, tryRefresh } from "../api/config.js";
 
 export default function useAuthFetch() {
     
@@ -8,21 +8,32 @@ export default function useAuthFetch() {
     const navigate = useNavigate();
 
     async function authFetch(url, options = {}) {
-        const token = getToken();
-        const headers = {
-            ...options.headers,
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        };
-
-        const response = await fetch(url, { ...options, headers });
-
+        let accessToken = getAccessToken();
+      
+        const doFetch = (token) =>
+          fetch(url, {
+            ...options,
+            headers: {
+              ...options.headers,
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+          });
+      
+        let response = await doFetch(accessToken);
+      
+        // Access expired — try refresh once
         if (response.status === 401) {
+          const refreshed = await tryRefresh(); // POST /auth/refresh
+          if (refreshed) {
+            accessToken = getAccessToken();
+            response = await doFetch(accessToken);
+          } else {
             logout();
             navigate("/login", { replace: true });
+          }
         }
-
         return response;
-    }
+      }
 
     return authFetch;
 }

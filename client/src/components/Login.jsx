@@ -40,7 +40,7 @@ export default function Login() {
         return;
       }
 
-      saveAuth(data.token, data.user);
+      saveAuth(data.accessToken, data.refreshToken, data.user);
       notify.success("Logged in successfully");
       navigate("/courses", { replace: true });
     } catch {

@@ -5,12 +5,14 @@ import useAuthFetch from "../hooks/useAuthFetch.js";
 import useNotification from "../hooks/useNotification.js";
 import { useAuth } from "../context/AuthProvider.jsx";
 import Loader from "./Loader.jsx";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 
 function Courses() {
 
     const authFetch = useAuthFetch();
     const queryClient = useQueryClient();
+    const [page, setPage] = useState(1);
+    const LIMIT = 10;
     const { user } = useAuth();
     const isAdmin = user?.role === "admin";
     const [course, setCourse] = useState({
@@ -25,14 +27,28 @@ function Courses() {
 
     // Server state: course list — cached by queryKey, refetch skipped while fresh (see queryClient.js)
     const {
-        data: courses = [],
+        data: coursesFetchData,
         isLoading: coursesLoading,
         isError: coursesError,
         error: coursesFetchError,
     } = useQuery({
-        queryKey: ["courses"],
+        queryKey: ["courses", page, LIMIT],
         queryFn: async () => {
-            const res = await authFetch(endpoints.courses);
+            const res = await authFetch(`${endpoints.courses}?limit=${LIMIT}&page=${page}`);
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.error || "Failed to fetch courses");
+            }
+            return data;
+        },
+        placeholderData: keepPreviousData, // v5: placeholderData: keepPreviousData — smooth page transitions
+    });
+
+    // All courses for enrolled-students dropdown — not tied to paginated list page
+    const { data: courseOptionsData } = useQuery({
+        queryKey: ["courses", "options"],
+        queryFn: async () => {
+            const res = await authFetch(`${endpoints.courses}?page=1&limit=100`);
             const data = await res.json();
             if (!res.ok) {
                 throw new Error(data.error || "Failed to fetch courses");
@@ -183,6 +199,10 @@ function Courses() {
         setDraftEdits(prev => prev.filter(c => c.id !== edit.id));
     }
 
+    const courses = coursesFetchData?.data ?? [];
+    const courseOptions = courseOptionsData?.data ?? [];
+    const pagination = coursesFetchData?.pagination;
+    
     return (
         <div style={{ padding: "0px 24px" }}>
             <h1>Courses</h1>
@@ -195,13 +215,12 @@ function Courses() {
                 <Loader loading={coursesLoading} />
                 <ul>
                     {
-                        courses.map((c) => {
+                        courses?.map((c) => {
                             const edit = draftEdits.find(e => e.id === c.id)
                             if (edit && isAdmin) {
                                 return <li key={c.id}>
                                     <form style={{ display: 'flex', gap: '1rem' }}
-                                        onSubmit={(e) => updateCourse(e, c.id)}
-                                    >
+                                        onSubmit={(e) => updateCourse(e, c.id)}>
                                         <input name="code" value={edit.code} placeholder="code" onChange={(e) => handleCourseFieldUpdate(c.id, e)} />
                                         <input name="title" value={edit.title} placeholder="title" onChange={(e) => handleCourseFieldUpdate(c.id, e)} />
                                         <input name="description" value={edit.description} placeholder="description" onChange={(e) => handleCourseFieldUpdate(c.id, e)} />
@@ -232,6 +251,27 @@ function Courses() {
                     }
                 </ul>
             </div>
+            {pagination && (
+                <div style={{ display: "flex", gap: "1rem", marginTop: "1rem" }}>
+                    <button
+                        type="button"
+                        disabled={!pagination.hasPrev || coursesLoading}
+                        onClick={() => setPage((p) => p - 1)}
+                    >
+                        Previous
+                    </button>
+                    <span>
+                        Page {pagination.page} of {pagination.totalPages} ({pagination.total} total)
+                    </span>
+                    <button
+                        type="button"
+                        disabled={!pagination.hasNext || coursesLoading}
+                        onClick={() => setPage((p) => p + 1)}
+                    >
+                        Next
+                    </button>
+                </div>
+            )}
             {isAdmin && (
                 <div className="loader-section">
                     <Loader loading={createCourseMutation.isPending} />
@@ -253,7 +293,7 @@ function Courses() {
                     <select value={selectedCourse} onChange={(e) => setSelectedCourse(e.target.value)}>
                         <option value={""}>Select</option>
                         {
-                            courses.map((c) =>
+                            courseOptions.map((c) =>
                                 <option key={c.id} value={c.id}
                                 >{c.title}</option>)
                         }

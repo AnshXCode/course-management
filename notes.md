@@ -15,3 +15,6 @@ So it’s not “500 is special and 400 isn’t” — it’s server problem vs 
 
 “Classic backend pattern” in one sentence
 Don’t enforce business rules with read-then-write in application code unless the database guarantees nothing changes between read and write — use a transaction + lock, or push the rule into a single SQL statement / constraint.
+
+
+"Slow or flaky work like email shouldn’t run inside the HTTP request. The API enqueues a job to Redis and returns immediately. A separate worker process pulls jobs, executes them with retries and backoff, and failed jobs after max attempts go to a dead letter state for monitoring. That gives faster responses, better reliability, and independent scaling of API vs workers."

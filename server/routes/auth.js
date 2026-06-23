@@ -2,12 +2,12 @@ import express from "express";
 import pool from "../db/pool.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { sendEmailForVerification } from "../services/email.js";
 import { validateBody } from "../middleware/validate.js";
 import { loginSchema, emailSchema } from "../schemas/auth.schema.js";
 import { asyncHandler } from "../middleware/asyncHandler.js";
 import { signAccessToken } from "../lib/tokens.js";
 import { createRefreshToken, revokeRefreshToken, findValidRefreshToken } from "../services/refreshTokenService.js";
+import { enqueueVerificationEmail } from "../queues/emailQueue.js";
 
 const router = express.Router();
 
@@ -66,7 +66,7 @@ router.post("/register", validateBody(loginSchema), asyncHandler(async (req, res
         process.env.JWT_SECRET,
         { expiresIn: "3h" }
     );
-    await sendEmailForVerification(email, token);
+    await enqueueVerificationEmail(email, token);
     res.status(201).json({ info: "Email send. Please verify." });
 }));
 
@@ -87,7 +87,7 @@ router.post("/resend-email", validateBody(emailSchema), asyncHandler(async (req,
         process.env.JWT_SECRET,
         { expiresIn: "3h" }
     );
-    await sendEmailForVerification(email, token);
+    await enqueueVerificationEmail(email, token);
     res.status(200).json({ info: "Email send. Please verify." });
 }));
 
@@ -119,30 +119,30 @@ router.post("/login", validateBody(loginSchema), asyncHandler(async (req, res) =
     res.status(200).json({ accessToken, refreshToken, user: payload });
 }));
 
-router.post('/logout', asyncHandler(async(req, res) => {
-    const {refreshToken} = req.body;
-    if(refreshToken){
+router.post('/logout', asyncHandler(async (req, res) => {
+    const { refreshToken } = req.body;
+    if (refreshToken) {
         await revokeRefreshToken(refreshToken);
     }
-    res.status(200).json({info: "Logged out"});
+    res.status(200).json({ info: "Logged out" });
 }))
 
-router.post("/refresh", asyncHandler(async(req, res) => {
-        const {refreshToken} = req.body;
-        if(!refreshToken) {
-            return res.status(401).json({error: "Refresh token required"});
-        }
-        const row = await findValidRefreshToken(refreshToken);
-        if(!row){
-            return res.status(401).json({error: "Refresh token Expired or Invalid"});
-        }
+router.post("/refresh", asyncHandler(async (req, res) => {
+    const { refreshToken } = req.body;
+    if (!refreshToken) {
+        return res.status(401).json({ error: "Refresh token required" });
+    }
+    const row = await findValidRefreshToken(refreshToken);
+    if (!row) {
+        return res.status(401).json({ error: "Refresh token Expired or Invalid" });
+    }
 
-        // Rotation: revoke old, issue new refresh token
-        await revokeRefreshToken(refreshToken);
-        const newRefreshToken = await createRefreshToken(row.user_id);
-        const user = { id: row.user_id, email: row.email, role: row.role};
-        const accessToken = signAccessToken(user);
-        res.status(200).json({accessToken, refreshToken: newRefreshToken, user})
+    // Rotation: revoke old, issue new refresh token
+    await revokeRefreshToken(refreshToken);
+    const newRefreshToken = await createRefreshToken(row.user_id);
+    const user = { id: row.user_id, email: row.email, role: row.role };
+    const accessToken = signAccessToken(user);
+    res.status(200).json({ accessToken, refreshToken: newRefreshToken, user })
 
 }))
 

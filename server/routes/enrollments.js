@@ -57,6 +57,8 @@ router.post("/", requireAdmin, asyncHandler(async (req, res) => {
 
         // Lock the course row — concurrent enrollments block here until this tx commits
         const courseResult = await client.query(
+            // A plain SELECT (without FOR UPDATE) does not lock the row — other transactions can read and write it freely.
+            // FOR UPDATE creates a real row-level lock inside PostgreSQL
             "SELECT capacity FROM courses WHERE id = $1 FOR UPDATE",
             [courseId]
         );

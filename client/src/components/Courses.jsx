@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import '../App.css';
-import { endpoints } from "../api/config.js";
+import { endpoints, formatPrice } from "../api/config.js";
 import useAuthFetch from "../hooks/useAuthFetch.js";
 import useNotification from "../hooks/useNotification.js";
 import { useAuth } from "../context/AuthProvider.jsx";
@@ -11,6 +12,7 @@ function Courses() {
 
     const authFetch = useAuthFetch();
     const queryClient = useQueryClient();
+    const navigate = useNavigate();
     const [page, setPage] = useState(1);
     const LIMIT = 10;
     const { user } = useAuth();
@@ -19,8 +21,10 @@ function Courses() {
         code: "",
         title: "",
         description: "",
-        capacity: 60
+        capacity: 60,
+        price_cents: 0,
     });
+    const [checkoutCourseId, setCheckoutCourseId] = useState(null);
     const [selectedCourse, setSelectedCourse] = useState("");
     const [draftEdits, setDraftEdits] = useState([]);
     const notify = useNotification();
@@ -96,7 +100,7 @@ function Courses() {
         },
         onSuccess: () => {
             invalidateCourses();
-            setCourse({ code: "", title: "", description: "", capacity: 60 });
+            setCourse({ code: "", title: "", description: "", capacity: 60, price_cents: 0 });
             notify.success("Course created");
         },
         onError: (err) => {
@@ -151,10 +155,40 @@ function Courses() {
         },
     });
 
+    const checkoutMutation = useMutation({
+        mutationFn: async (courseId) => {
+            const res = await authFetch(`${endpoints.payments}/checkout`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ courseId }),
+            });
+            const result = await res.json();
+            if (!res.ok) {
+                throw new Error(result.error || "Failed to start checkout");
+            }
+            return result.data;
+        },
+        onSuccess: (data) => {
+            navigate(`/payment/${data.id}`);
+        },
+        onError: (err) => {
+            notify.error(err.message || "Failed to start checkout");
+        },
+        onSettled: () => {
+            setCheckoutCourseId(null);
+        },
+    });
+
     const isSubmitting =
         createCourseMutation.isPending ||
         updateCourseMutation.isPending ||
-        deleteCourseMutation.isPending;
+        deleteCourseMutation.isPending ||
+        checkoutMutation.isPending;
+
+    const handlePayAndEnroll = (courseId) => {
+        setCheckoutCourseId(courseId);
+        checkoutMutation.mutate(courseId);
+    };
 
     useEffect(() => {
         if (coursesError) {
@@ -206,11 +240,11 @@ function Courses() {
     return (
         <div style={{ padding: "0px 24px" }}>
             <h1>Courses</h1>
-            {!isAdmin && (
-                <p style={{ color: "#888", marginBottom: "1rem" }}>
-                    View only — contact an admin to add or edit courses.
-                </p>
-            )}
+            <p style={{ color: "#888", marginBottom: "1rem", maxWidth: "40rem" }}>
+                {isAdmin
+                    ? "Set price (cents) when creating or editing a course. Paid courses show Pay & enroll for students."
+                    : "Enroll in a paid course: click Pay & enroll, then confirm on the mock checkout page. Your login email must match a student profile."}
+            </p>
             <div className="loader-section" style={{ minHeight: coursesLoading ? "6rem" : undefined }}>
                 <Loader loading={coursesLoading} />
                 <ul>
@@ -225,6 +259,7 @@ function Courses() {
                                         <input name="title" value={edit.title} placeholder="title" onChange={(e) => handleCourseFieldUpdate(c.id, e)} />
                                         <input name="description" value={edit.description} placeholder="description" onChange={(e) => handleCourseFieldUpdate(c.id, e)} />
                                         <input name="capacity" value={edit.capacity} type="number" placeholder="capacity" onChange={(e) => handleCourseFieldUpdate(c.id, e)} />
+                                        <input name="price_cents" value={edit.price_cents ?? 0} type="number" min="0" placeholder="price (cents)" onChange={(e) => handleCourseFieldUpdate(c.id, e)} />
                                         <button onClick={() => handleRemoveFromEdits(c)} type="button" disabled={isSubmitting}>Cancel</button>
                                         <button type="submit" disabled={isSubmitting}>Save</button>
                                     </form>
@@ -234,10 +269,23 @@ function Courses() {
                                     <div style={{ display: 'flex', gap: '1rem' }}>
                                         <p>
                                             <strong>{c.code}</strong> - {c.title} (capacity : {c.capacity})
+                                            {" · "}
+                                            {formatPrice(c.price_cents ?? 0)}
                                             <br />
                                             <i>{c.description}</i>
 
                                         </p>
+                                        {(c.price_cents ?? 0) > 0 && (
+                                            <button
+                                                type="button"
+                                                onClick={() => handlePayAndEnroll(c.id)}
+                                                disabled={isSubmitting}
+                                            >
+                                                {checkoutCourseId === c.id && checkoutMutation.isPending
+                                                    ? "Starting…"
+                                                    : `Pay & enroll (${formatPrice(c.price_cents)})`}
+                                            </button>
+                                        )}
                                         {isAdmin && (
                                             <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
                                                 <button onClick={() => setDraftEdits(prev => [...prev, c])} disabled={isSubmitting}>Edit</button>
@@ -282,6 +330,7 @@ function Courses() {
                         <input name="title" value={course.title} placeholder="title" onChange={handleFormUpdate} disabled={isSubmitting} />
                         <input name="description" value={course.description} placeholder="description" onChange={handleFormUpdate} disabled={isSubmitting} />
                         <input name="capacity" value={course.capacity} type="number" placeholder="capacity" onChange={handleFormUpdate} disabled={isSubmitting} />
+                        <input name="price_cents" value={course.price_cents} type="number" min="0" placeholder="price (cents)" onChange={handleFormUpdate} disabled={isSubmitting} />
                         <button type="submit" disabled={isSubmitting}>Submit</button>
                     </form>
                 </div>

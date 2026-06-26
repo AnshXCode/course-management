@@ -42,12 +42,12 @@ const Enrollments = () => {
     const fetchCourses = async () => {
         setCoursesLoading(true);
         try {
-            const res = await authFetch(endpoints.courses);
+            const res = await authFetch(`${endpoints.courses}?page=1&limit=100`);
             if (!res.ok) {
                 throw new Error("Failed to fetch courses");
             }
-            const data = await res.json();
-            setCourses(data);
+            const body = await res.json();
+            setCourses(body.data ?? []);
         } catch (err) {
             console.error(err);
             notify.error("Something went wrong while fetching courses");
@@ -75,10 +75,12 @@ const Enrollments = () => {
 
 
     useEffect(() => {
-        fetchCourses();
-        fetchStudents();
         fetchEnrollments();
-    }, []);
+        if (isAdmin) {
+            fetchCourses();
+            fetchStudents();
+        }
+    }, [isAdmin]);
 
     const enrollStudent = async () => {
         setIsSubmitting(true);

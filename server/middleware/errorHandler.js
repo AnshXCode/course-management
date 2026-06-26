@@ -13,6 +13,10 @@ export const errorReturnHandler = (err, req, res, next) => {
         return next(err);
     }
 
+    if (err.name === "HttpError" && err.status) {
+        return res.status(err.status).json({ error: err.message });
+    }
+
     if (err.code === "23505") {
         return res.status(409).json({
             error: constraintMapping[err.constraint] ?? "Resource already exists",
@@ -28,7 +32,8 @@ export const errorReturnHandler = (err, req, res, next) => {
 
 
 export const errorHandler = (err, req, res, next) => {
-    const statusCode = err.code === "23505" ? 409 :
+    const statusCode = err.name === "HttpError" && err.status ? err.status :
+        err.code === "23505" ? 409 :
         err.code === "23503" ? 400 : 500;
 
     const logPayload = {

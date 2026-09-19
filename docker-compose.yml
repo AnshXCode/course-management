@@ -11,6 +11,8 @@ services:
       - ./server/.env
     environment:
       REDIS_URL: redis://redis:6379
+      # Reach Postgres on the Mac from inside the container (no password)
+      DATABASE_URL: postgresql://rohingoyal123@host.docker.internal:5432/course_management
       CLIENT_URL: http://localhost:5173
     depends_on:
       - redis
@@ -23,6 +25,8 @@ services:
       - ./server/.env
     environment:
       REDIS_URL: redis://redis:6379
+      # Reach Postgres on the Mac from inside the container (no password)
+      DATABASE_URL: postgresql://rohingoyal123@host.docker.internal:5432/course_management
       CLIENT_URL: http://localhost:5173
     depends_on:
       - redis

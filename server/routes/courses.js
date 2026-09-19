@@ -29,7 +29,7 @@ router.get("/", validateBody(paginationQuerySchema), asyncHandler(async (req, re
     // }
 
     const result = await pool.query(
-        `SELECT id, code, title, description, capacity, created_at FROM courses ORDER BY id
+        `SELECT id, code, title, description, capacity, price_cents, created_at FROM courses ORDER BY id
         LIMIT $1 OFFSET $2
         `, [limit, offset]
     );
@@ -43,12 +43,12 @@ router.get("/", validateBody(paginationQuerySchema), asyncHandler(async (req, re
 }));
 
 router.post("/", requireAdmin, validateBody(courseBodySchema), asyncHandler(async (req, res) => {
-    const { code, title, description, capacity } = req.body;
+    const { code, title, description, capacity, price_cents } = req.body;
     const result = await pool.query(
-        `INSERT INTO courses (code, title, description, capacity)
-         VALUES ($1, $2, $3, $4)
-         RETURNING id, code, title, description, capacity, created_at`,
-        [code, title, description ?? null, capacity ?? 30]
+        `INSERT INTO courses (code, title, description, capacity, price_cents)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING id, code, title, description, capacity, price_cents, created_at`,
+        [code, title, description ?? null, capacity ?? 30, price_cents ?? 0]
     );
     del(COURSES_LIST_KEY);
     res.status(201).json(result.rows[0]);
@@ -65,7 +65,7 @@ router.get("/:id", asyncHandler(async (req, res) => {
     }
 
     const result = await pool.query(
-        "SELECT id, code, title, description, capacity, created_at FROM courses WHERE id = $1",
+        "SELECT id, code, title, description, capacity, price_cents, created_at FROM courses WHERE id = $1",
         [id]
     );
     if (result.rows.length === 0) {
@@ -95,13 +95,13 @@ router.get("/:id/students", asyncHandler(async (req, res) => {
 
 router.put("/:id", requireAdmin, validateBody(courseBodySchema), asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { code, title, description, capacity } = req.body;
+    const { code, title, description, capacity, price_cents } = req.body;
     const result = await pool.query(
         `UPDATE courses
-         SET code = $1, title = $2, description = $3, capacity = $4
-         WHERE id = $5
-         RETURNING id, code, title, description, capacity, created_at`,
-        [code, title, description ?? null, capacity ?? 30, id]
+         SET code = $1, title = $2, description = $3, capacity = $4, price_cents = $5
+         WHERE id = $6
+         RETURNING id, code, title, description, capacity, price_cents, created_at`,
+        [code, title, description ?? null, capacity ?? 30, price_cents ?? 0, id]
     );
     if (result.rows.length === 0) {
         return res.status(404).json({ error: "Course not found" });

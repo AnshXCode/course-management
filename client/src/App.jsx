@@ -10,6 +10,7 @@ import ProtectedLayout from "./components/ProtectedLayout.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import GuestRoute from "./components/GuestRoute.jsx";
 import Logs from "./components/Logs.jsx"
+import MockPayment from "./components/MockPayment.jsx";
 import RootRedirect from "./components/RootRedirect.jsx";
 import "./App.css";
 
@@ -39,6 +40,7 @@ function App() {
           <Route path="/courses" element={<Courses />} />
           <Route path="/students" element={<Students />} />
           <Route path="/enrollments" element={<Enrollments />} />
+          <Route path="/payment/:paymentId" element={<MockPayment />} />
           <Route path="/logs" element={<Logs />} />
         </Route>
       </Route>

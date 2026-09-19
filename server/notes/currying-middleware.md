@@ -1,38 +1,80 @@
-# Currying in Express middleware
+# Currying in Express middleware — notes
 
 Notes on how `validateBody` and `asyncHandler` use **currying**, why we use that pattern, and what you gain from it.
 
-Related files:
-
-- `server/middleware/validate.js` — `validateBody`, `validateParams`
-- `server/middleware/asyncHandler.js` — `asyncHandler`
-- Example usage: `server/routes/courses.js`
+**Read order:** Topic 1 (concepts) → Topic 2 (`validateBody`) → Topic 3 (`asyncHandler`) → Appendix
 
 ---
 
-## 1. What is currying?
+## Index
 
-**Currying** means: a function that does not take all arguments at once. Instead, it takes **some** arguments now and returns **another function** that waits for the rest later.
+Line numbers match this file. **Read top to bottom.**
+
+### Read in order
+
+| # | Topic | Start at line |
+|---|-------|---------------|
+| **1** | [What is currying + Express shape](#topic-1--what-is-currying--express-shape) | 61 |
+| **2** | [`validateBody`](#topic-2--validatebody) | 104 |
+| **3** | [`asyncHandler`](#topic-3--asynchandler) | 162 |
+| — | [Appendix](#appendix) | 224 |
+
+### Topic 1
+
+| Section | Line |
+|---------|------|
+| [What is currying?](#what-is-currying) | 69 |
+| [What Express wants](#what-express-wants) | 86 |
+
+### Topic 2
+
+| Section | Line |
+|---------|------|
+| [Source code](#validatebody-source) | 112 |
+| [Two functions](#validatebody-two-functions) | 126 |
+| [Route example](#validatebody-route-example) | 136 |
+| [Without currying](#without-currying) | 154 |
+
+### Topic 3
+
+| Section | Line |
+|---------|------|
+| [Source code](#asynchandler-source) | 170 |
+| [Why we need it](#why-we-need-asynchandler) | 185 |
+| [Middleware chain](#middleware-chain) | 203 |
+
+### Appendix
+
+| Section | Line |
+|---------|------|
+| [Side-by-side comparison](#side-by-side-comparison) | 230 |
+| [Benefits](#benefits) | 239 |
+| [Mental model](#mental-model) | 248 |
+| [Self-test](#self-test) | 261 |
+| [Same pattern elsewhere](#same-pattern-elsewhere) | 271 |
+| [Related files](#related-files) | 280 |
+
+[↑ Back to top](#currying-in-express-middleware--notes)
+
+---
+
+# Topic 1 — What is currying + Express shape
+
+> **Read first** — foundation for both middleware helpers.
+
+[↑ Index](#index) · **Next:** [Topic 2](#topic-2--validatebody)
+
+---
+
+## What is currying?
+
+A function that takes **some** arguments now and returns **another function** for the rest later.
 
 ```js
-// Normal function — all arguments at once
-function add(a, b) {
-  return a + b;
-}
-add(2, 3); // 5
+// Normal
+function add(a, b) { return a + b; }
 
-// Curried version — one argument, then the next
-function addCurried(a) {
-  return function (b) {
-    return a + b;
-  };
-}
-addCurried(2)(3); // 5
-```
-
-Same idea in arrow functions (what we use):
-
-```js
+// Curried
 const addCurried = (a) => (b) => a + b;
 addCurried(2)(3); // 5
 ```
@@ -41,114 +83,94 @@ addCurried(2)(3); // 5
 
 ---
 
-## 2. What Express actually wants
+## What Express wants
 
-Express middleware must look like this:
-
-```js
-function middleware(req, res, next) {
-  // do something
-  next(); // or send a response
-}
-```
-
-When you write:
+Middleware must be `(req, res, next) => { ... }`.
 
 ```js
 router.post("/", someMiddleware, routeHandler);
+// Express calls: someMiddleware(req, res, next)
 ```
 
-Express will call `someMiddleware(req, res, next)` on every matching request.
+Currying builds that in two steps:
 
-So anything you pass in the route must eventually become a function with **signature** `(req, res, next)`.
+1. **Configure** — pass schema or route handler `fn`
+2. **Run** — Express passes `req`, `res`, `next`
 
-Currying is how we **build** that function in two steps:
-
-1. **Configure** (pass schema, or route handler `fn`)
-2. **Run** (Express passes `req`, `res`, `next`)
+**Topic 1 complete.** → [Topic 2 — `validateBody`](#topic-2--validatebody)
 
 ---
 
-## 3. `validateBody` — step by step
+# Topic 2 — `validateBody`
 
-### Source
+> **Read second** — currying for Zod validation.
+
+[↑ Index](#index) · **Previous:** [Topic 1](#topic-1--what-is-currying--express-shape) · **Next:** [Topic 3](#topic-3--asynchandler)
+
+---
+
+## validateBody — source
 
 ```js
+// server/middleware/validate.js
 export const validateBody = (schema) => (req, res, next) => {
   const result = schema.safeParse(req.body ?? {});
   if (!result.success) return sendValidationError(result, res);
-
   req.body = result.data;
   next();
 };
 ```
 
-### Two functions, one after the other
+---
+
+## validateBody — two functions
 
 ```text
 validateBody(schema)  →  returns middleware(req, res, next)
          ↑                           ↑
-   you call this              Express calls this
-   when defining route        on each request
+   you call at route setup    Express calls per request
 ```
-
-### Example from your courses route
-
-```js
-router.post("/", requireAdmin, validateBody(courseBodySchema), asyncHandler(async (req, res) => {
-  // ...
-}));
-```
-
-What JavaScript does:
-
-```js
-// Step 1 — when the app starts (route is registered)
-const middleware = validateBody(courseBodySchema);
-// middleware is now: (req, res, next) => { ... uses courseBodySchema ... }
-
-// Step 2 — when a POST /api/courses request arrives
-middleware(req, res, next);
-// Inside: safeParse(req.body) against courseBodySchema
-// If OK: req.body = cleaned data, next()
-// If bad: res.status(400).json(...), stop chain
-```
-
-### Same helper, different schemas
-
-```js
-validateBody(courseBodySchema)   // for courses
-validateBody(loginSchema)        // for auth login
-validateBody(assignmentCreateSchema) // for assignments (when you add it)
-```
-
-You write **one** `validateBody` function. Each route **specializes** it by passing a different `schema`. That specialization is the first curry call.
-
-### Without currying (repetitive)
-
-You would need something like:
-
-```js
-function validateCourseBody(req, res, next) {
-  const result = courseBodySchema.safeParse(req.body ?? {});
-  // ... same logic repeated ...
-}
-
-function validateLoginBody(req, res, next) {
-  const result = loginSchema.safeParse(req.body ?? {});
-  // ... same logic repeated ...
-}
-```
-
-Currying avoids copy-pasting the validation logic for every schema.
 
 ---
 
-## 4. `asyncHandler` — step by step
-
-### Source
+## validateBody — route example
 
 ```js
+// server/routes/courses.js
+router.post("/", requireAdmin, validateBody(courseBodySchema), asyncHandler(async (req, res) => {
+  // req.body already validated and coerced
+}));
+```
+
+Same helper, different schemas:
+
+```js
+validateBody(courseBodySchema)
+validateBody(loginSchema)
+```
+
+---
+
+## Without currying
+
+You'd copy-paste validation logic for every schema — one function per route. Currying = **one** implementation, many specializations.
+
+**Topic 2 complete.** → [Topic 3 — `asyncHandler`](#topic-3--asynchandler)
+
+---
+
+# Topic 3 — `asyncHandler`
+
+> **Read third** — currying for async error forwarding.
+
+[↑ Index](#index) · **Previous:** [Topic 2](#topic-2--validatebody) · **Next:** [Appendix](#appendix)
+
+---
+
+## asyncHandler — source
+
+```js
+// server/middleware/asyncHandler.js
 export const asyncHandler = (fn) => async (req, res, next) => {
   try {
     await fn(req, res, next);
@@ -158,217 +180,106 @@ export const asyncHandler = (fn) => async (req, res, next) => {
 };
 ```
 
-### Two functions again
+---
 
-```text
-asyncHandler(routeFn)  →  returns async middleware(req, res, next)
-        ↑                            ↑
-  your async route            Express calls this;
-  handler passed in           wraps fn in try/catch
-```
+## Why we need asyncHandler
 
-### Example
+`async` handlers return Promises. Uncaught throws **don't** reach `errorHandler` without a wrapper.
 
 ```js
-router.get("/", asyncHandler(async (req, res) => {
-  const result = await pool.query("SELECT ...");
-  res.json(result.rows);
-}));
-```
-
-Breakdown:
-
-```js
-// Step 1 — register route
-const wrapped = asyncHandler(async (req, res) => {
-  const result = await pool.query("SELECT ...");
-  res.json(result.rows);
-});
-// wrapped is: async (req, res, next) => { try { await fn(...) } catch { next(err) } }
-
-// Step 2 — request comes in
-await wrapped(req, res, next);
-```
-
-### Why we need it
-
-`async` route handlers return Promises. If you `throw` or reject inside async code, Express 4/5 does **not** automatically send that to your `errorHandler` unless you catch it.
-
-**Without asyncHandler:**
-
-```js
+// Without — throw may become unhandled rejection
 router.get("/", async (req, res) => {
-  const data = await prisma.courses.findMany(); // if this throws → unhandled rejection
-  res.json(data);
+  await pool.query(...);
 });
-```
 
-**With asyncHandler:**
-
-```js
+// With — throw → catch → next(err) → errorHandler
 router.get("/", asyncHandler(async (req, res) => {
-  const data = await prisma.courses.findMany(); // throw → catch → next(err) → errorHandler
-  res.json(data);
+  await pool.query(...);
 }));
 ```
-
-One wrapper, every route gets the same error forwarding.
 
 ---
 
-## 5. Middleware chain on one route
-
-Real line from `courses.js`:
+## Middleware chain
 
 ```js
-router.post(
-  "/",
-  requireAdmin,
-  validateBody(courseBodySchema),
-  asyncHandler(async (req, res) => {
-    // create course — req.body already validated
-  })
-);
+router.post("/", requireAdmin, validateBody(courseBodySchema), asyncHandler(handler));
 ```
-
-Request flow:
 
 ```text
 POST /api/courses
-    │
-    ▼
-requireAuth (on app.use — runs first)
-    │
-    ▼
-requireAdmin(req, res, next)
-    │  not admin → 403, stop
-    ▼
-validateBody(courseBodySchema)(req, res, next)
-    │  invalid body → 400, stop
-    │  valid → req.body normalized, next()
-    ▼
-asyncHandler(handler)(req, res, next)
-    │  await DB work
-    │  error → next(err) → errorHandler
-    ▼
-201 response
+    → requireAuth (app level)
+    → requireAdmin        (403 if not admin)
+    → validateBody        (400 if invalid)
+    → asyncHandler        (errors → errorHandler)
+    → 201 response
 ```
 
-Each item in the route is either:
+Each item is either `(req, res, next)` directly, or a **factory** that returns it.
 
-- Already `(req, res, next)`, e.g. `requireAdmin`, or
-- A **curried factory** that returns `(req, res, next)`, e.g. `validateBody(schema)`, `asyncHandler(fn)`
-
----
-
-## 6. Side-by-side comparison
-
-| | First call (you) | Second call (Express) | What gets “stored” |
-|--|----------------|------------------------|---------------------|
-| `validateBody(schema)` | Pass Zod schema | `(req, res, next)` | `schema` in closure |
-| `asyncHandler(fn)` | Pass route function | `(req, res, next)` | `fn` in closure |
-
-**Closure** = the inner function remembers variables from the outer function (`schema`, `fn`) even after the outer function finished running.
+**Topic 3 complete.** → [Appendix](#appendix)
 
 ---
 
-## 7. Why use currying here? (Benefits)
+# Appendix
 
-### Reuse one pattern, many routes
-
-- One `validateBody` for all Zod schemas
-- One `asyncHandler` for all async routes
-
-### Express-compatible shape
-
-Express needs `(req, res, next)`. Currying lets you **pre-fill** extra config (schema, handler) and still return exactly that shape.
-
-### Readable routes
-
-```js
-validateBody(courseBodySchema)
-```
-
-Reads as: “validate body **with this schema**.” The schema is visible at the call site.
-
-### Less duplication
-
-Validation logic and try/catch logic live in **one file**, not copied into every route.
-
-### Easy to compose
-
-Middleware order is just argument order:
-
-```js
-router.put("/:id", requireAdmin, validateBody(schema), asyncHandler(handler));
-```
+[↑ Index](#index)
 
 ---
 
-## 8. “Is this the same as partial application?”
+## Side-by-side comparison
 
-**Very similar.** People often use the terms loosely.
-
-- **Currying:** transform `f(a, b, c)` into `f(a)(b)(c)` — one argument per function.
-- **Partial application:** fix **some** arguments of a function, get a new function for the rest.
-
-For middleware, the idea is: **fix schema (or fn) first, leave `(req, res, next)` for Express.**
+| | First call (you) | Second call (Express) | Stored in closure |
+|--|------------------|----------------------|-------------------|
+| `validateBody(schema)` | Zod schema | `(req, res, next)` | `schema` |
+| `asyncHandler(fn)` | Route function | `(req, res, next)` | `fn` |
 
 ---
 
-## 9. Mental model (remember this)
+## Benefits
+
+- **Reuse** — one `validateBody`, one `asyncHandler`, all routes
+- **Express-compatible** — always returns `(req, res, next)`
+- **Readable** — `validateBody(courseBodySchema)` reads as config at call site
+- **Composable** — order = argument order in route definition
+
+---
+
+## Mental model
 
 ```text
-Curried middleware factory:
+(config) => (req, res, next) => { ... use config ... }
 
-  (config) => (req, res, next) => { ... use config + req ... }
-
-validateBody:
-  config = schema
-
-asyncHandler:
-  config = your route handler fn
+validateBody:  config = schema
+asyncHandler:  config = route handler fn
 ```
 
-When you see:
-
-```js
-validateBody(something)
-asyncHandler(something)
-```
-
-Read it as:
-
-> “Give me a middleware configured with `something`.”
+Read `validateBody(something)` as: *"Give me middleware configured with `something`."*
 
 ---
 
-## 10. Quick self-test
+## Self-test
 
-1. What does `validateBody(courseBodySchema)` return?  
-   → A function `(req, res, next) => { ... }`
-
-2. Who calls that returned function?  
-   → Express, on each request
-
-3. Why not write `validateBody(req, res, next, schema)`?  
-   → Express only calls `(req, res, next)`. Extra config must be fixed **before** via currying.
-
-4. What happens if `asyncHandler` is removed and `await prisma...` throws?  
-   → Error may not reach `errorHandler` cleanly
-
-5. Why is `req.body = result.data` useful after Zod?  
-   → Downstream code gets coerced/validated data (numbers as numbers, dates as dates, defaults applied)
+1. What does `validateBody(schema)` return? → `(req, res, next) => { ... }`
+2. Who calls it? → Express, per request
+3. Why not `validateBody(req, res, next, schema)`? → Express only passes 3 args
+4. Remove `asyncHandler` and `await` throws? → May not reach `errorHandler`
+5. Why `req.body = result.data`? → Downstream gets coerced Zod output
 
 ---
 
-## 11. Same pattern elsewhere
+## Same pattern elsewhere
 
-You will see currying-style APIs in many places:
+- `rateLimit({ windowMs: 60000 })` → returns middleware
+- Redux: `(store) => (next) => (action) => { ... }`
 
-- `router.get(path, middleware1, middleware2, handler)`
-- `app.use(requireAuth)`
-- Redux middleware `(store) => (next) => (action) => { ... }`
-- Rate limiters: `rateLimit({ windowMs: 60000 })` → returns middleware
+**Outer = config, inner = request.**
 
-Once you recognize “outer function = config, inner function = Express request,” the pattern clicks everywhere.
+---
+
+## Related files
+
+- `server/middleware/validate.js` — `validateBody`, `validateParams`
+- `server/middleware/asyncHandler.js` — `asyncHandler`
+- `server/routes/courses.js` — example usage
+- `server/notes/asynchronous-vs-synchronous.md` — why async routes need the wrapper

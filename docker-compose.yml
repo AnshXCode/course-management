@@ -4,6 +4,19 @@ services:
     ports:
       - "6379:6379"
 
+  worker:
+    build: ./server
+    command: npm run worker
+    env_file:
+      - ./server/.env
+    environment:
+      REDIS_URL: redis://redis:6379
+      # Reach Postgres on the Mac from inside the container (no password)
+      DATABASE_URL: postgresql://rohingoyal123@host.docker.internal:5432/course_management
+      CLIENT_URL: http://localhost:5173
+    depends_on:
+      - redis
+
   api:
     build: ./server
     ports:
@@ -12,6 +25,8 @@ services:
       - ./server/.env
     environment:
       REDIS_URL: redis://redis:6379
+      # Reach Postgres on the Mac from inside the container (no password)
+      DATABASE_URL: postgresql://rohingoyal123@host.docker.internal:5432/course_management
       CLIENT_URL: http://localhost:5173
     depends_on:
       - redis

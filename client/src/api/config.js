@@ -6,8 +6,14 @@ const endpoints = {
     enrollments: `${API_BASE}/enrollments`,
     dashboard: `${API_BASE}/v2/dashboard`,
     auth: `${API_BASE}/auth`,
-    logs: `${API_BASE}/v2/logs`
+    logs: `${API_BASE}/v2/logs`,
+    payments: `${API_BASE}/payments`,
 };
+
+export function formatPrice(cents) {
+    if (cents == null || cents <= 0) return "Free";
+    return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
+}
 
 const getAccessToken = () => localStorage.getItem("accessToken");
 const getRefreshToken = () => localStorage.getItem("refreshToken");

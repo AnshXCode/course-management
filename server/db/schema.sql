@@ -42,6 +42,7 @@ CREATE TABLE courses (
   title       VARCHAR(255) NOT NULL,
   description TEXT,
   capacity    INTEGER      NOT NULL DEFAULT 30,
+  price_cents INTEGER      NOT NULL DEFAULT 0,
   created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
   CONSTRAINT courses_code_key UNIQUE (code)
 );
@@ -90,16 +91,37 @@ CREATE TABLE assignments (
 
 CREATE INDEX assignments_course_id_idx ON assignments (course_id);
 
-
+-- ---------------------------------------------------------------------------
+-- refresh_tokens (auth — token rotation / logout)
+-- ---------------------------------------------------------------------------
 CREATE TABLE refresh_tokens (
-  id SERIAL PRIMARY KEY,
-  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  id         SERIAL PRIMARY KEY,
+  user_id    INTEGER      NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   token_hash VARCHAR(255) NOT NULL UNIQUE,
-  expires_at TIMESTAMPTZ NOT NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  expires_at TIMESTAMPTZ  NOT NULL,
+  created_at TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
 
--- This line creates an index on the user_id column in the refresh_tokens table,
--- which speeds up queries that search for refresh tokens
--- by user_id (such as when validating or revoking tokens for a specific user).
-CREATE INDEX refresh_tokens_user_id_idx ON refresh_tokens(user_id);
+CREATE INDEX refresh_tokens_user_id_idx ON refresh_tokens (user_id);
+CREATE INDEX refresh_tokens_expires_at_idx ON refresh_tokens (expires_at);
+
+-- ---------------------------------------------------------------------------
+-- payments (course checkout — mock provider for now)
+-- ---------------------------------------------------------------------------
+CREATE TABLE payments (
+  id              SERIAL PRIMARY KEY,
+  user_id         INTEGER      NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  course_id       INTEGER      NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+  student_id      INTEGER      REFERENCES students(id) ON DELETE SET NULL,
+  amount_cents    INTEGER      NOT NULL,
+  currency        VARCHAR(3)   NOT NULL DEFAULT 'usd',
+  status          VARCHAR(20)  NOT NULL DEFAULT 'pending',
+  provider        VARCHAR(20)  NOT NULL DEFAULT 'mock',
+  idempotency_key VARCHAR(64)  UNIQUE,
+  enrollment_id   INTEGER      REFERENCES enrollments(id) ON DELETE SET NULL,
+  created_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  confirmed_at    TIMESTAMPTZ
+);
+
+CREATE INDEX payments_user_id_idx ON payments (user_id);
+CREATE INDEX payments_status_idx ON payments (status);

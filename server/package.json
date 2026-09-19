@@ -8,7 +8,9 @@
     "test:watch": "node --test --watch tests/**/*.test.js",
     "dev": "nodemon index.js",
     "start": "node index.js",
-    "test:rate-limit": "node scripts/rate-limit-test.mjs"
+    "test:rate-limit": "node scripts/rate-limit-test.mjs",
+    "dev:worker": "nodemon worker.js",
+    "worker": "node worker.js"
   },
   "keywords": [],
   "author": "",
@@ -18,10 +20,12 @@
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "bcrypt": "^6.0.0",
+    "bullmq": "^5.79.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "express-rate-limit": "^8.5.2",
+    "helmet": "^8.2.0",
     "jsonwebtoken": "^9.0.3",
     "lru-cache": "^11.5.1",
     "nodemailer": "^8.0.10",

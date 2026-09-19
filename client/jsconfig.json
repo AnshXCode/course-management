@@ -7,10 +7,9 @@
     "checkJs": false,
     "forceConsistentCasingInFileNames": true,
     "allowSyntheticDefaultImports": true,
-    "baseUrl": ".",
     "paths": {
       "@/*": [
-        "src/*"
+        "./src/*"
       ]
     }
   },
@@ -25,7 +24,7 @@
   to configure how editors like VSCode and build tools understand and resolve your project structure.
 
   The key uses:
-    - It tells the editor (such as VSCode) how to resolve modules and imports. For example, the "baseUrl" and "paths"
+    - It tells the editor (such as VSCode) how to resolve modules and imports. For example, the "paths"
       settings allow you to write imports like `import X from "@/components/X"` instead of long relative paths.
     - It enables features like IntelliSense, code navigation, refactoring, and autocompletion in your editor.
     - It configures the JavaScript and JSX compilation/analysis settings, ensuring consistency in project tooling.

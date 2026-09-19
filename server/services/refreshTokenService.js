@@ -28,11 +28,17 @@ export async function findValidRefreshToken(raw) {
     return result.rows[0] ?? null;
 }
 
-export async function revokeRefreshToken(raw){
+export async function revokeRefreshToken(raw) {
     const token_hash = hashToken(raw);
     await pool.query(`DELETE FROM refresh_tokens WHERE token_hash = $1`, [token_hash]);
 }
 
-export async function revokeAllForUser(userId){
+export async function revokeAllForUser(userId) {
     await pool.query(`DELETE FROM refresh_tokens WHERE user_id = $1`, [userId]);
+}
+
+
+export async function deleteExpiredRefreshTokens() {
+    const result = await pool.query(`DELETE FROM refresh_tokens WHERE expires_at < NOW() returning id`);
+    return result.rowCount; // or result.rows.length
 }

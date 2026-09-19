@@ -1,0 +1,20 @@
+CREATE TABLE enrollments (
+     id SERIAL PRIMARY KEY,
+     student_id INT NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+     course_id INT NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+     enrolled_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+     UNIQUE (student_id, course_id)
+   );
+
+
+ REFERENCES students(id) - Must be a real student
+ REFERENCES courses(id) - Must be a real course
+ UNIQUE (student_id, course_id)- No duplicate enrollment
+ ON DELETE CASCADE - Delete enrollments if student/course is deleted (fine for learning)
+
+
+
+SELECT *
+FROM enrollments
+JOIN students ON enrollments.student_id = students.id
+WHERE enrollments.course_id = 3;

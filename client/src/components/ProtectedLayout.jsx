@@ -3,7 +3,7 @@ import { useAuth } from "../context/AuthProvider.jsx";
 
 const NAV_ITEMS = [
   { to: "/dashboard", label: "Dashboard" },
-  { to: "/courses", label: "Courses" },
+  { to: "/courses", label: "Courses & pay" },
   { to: "/students", label: "Students" },
   { to: "/enrollments", label: "Enrollments" },
   { to: "/logs", label: "Logs", admin: true },
